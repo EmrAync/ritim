@@ -1,7 +1,7 @@
 // Playlists: overview, one list with its songs, entry editor, "add to list".
 
 import { useRef, useState } from 'react';
-import { player, selectEntry } from '../audio/player';
+import { player, selectEntry, setOrder } from '../audio/player';
 import { downloadAll, formatMB, offline } from '../data/offline';
 import {
   addEntry, createList, deleteEntry, deleteList, importList, moveEntry, moveList, playlists, renameList, updateEntry,
@@ -250,6 +250,17 @@ export function ListScreen({ id }: { id: string }) {
         }
       />
       <div className="scroll">
+        {list.entries.length > 0 && (
+          <button
+            className="primary-btn"
+            onClick={() => {
+              setOrder(id);
+              home();
+            }}
+          >
+            <Icon name="play" /> Bu listeyi baştan çal
+          </button>
+        )}
         <button className="add-btn" onClick={() => setEditing('new')}>
           <Icon name="plus" /> Şarkı ekle
         </button>

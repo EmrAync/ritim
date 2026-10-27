@@ -61,7 +61,9 @@
    "file": "rhythms/2-4-ritim-tempo-100-15dakika.mp3",
    "duration": 190.82,
    "loopScore": 0.98,
-   "size": 3054071
+   "size": 3054071,
+   "gridBpm": 100,
+   "phase": 0.104
   },
   {
    "id": "2-4-angara-bol-kasikli-ritim-tempo-100",
@@ -73,7 +75,9 @@
    "file": "rhythms/2-4-angara-bol-kasikli-ritim-tempo-100.mp3",
    "duration": 172.87,
    "loopScore": 0.87,
-   "size": 2766933
+   "size": 2766933,
+   "gridBpm": 99.95,
+   "phase": 0.838
   },
   {
    "id": "2-4-angara-bol-kasikli-ritim-tempo-85",
@@ -85,7 +89,9 @@
    "file": "rhythms/2-4-angara-bol-kasikli-ritim-tempo-85.mp3",
    "duration": 192.77,
    "loopScore": 0.85,
-   "size": 3085418
+   "size": 3085418,
+   "gridBpm": 84.96,
+   "phase": 0.453
   },
   {
    "id": "2-4-ankara-ritim-tempo-88",
@@ -97,7 +103,9 @@
    "file": "rhythms/2-4-ankara-ritim-tempo-88.mp3",
    "duration": 199.12,
    "loopScore": 0.9,
-   "size": 3186982
+   "size": 3186982,
+   "gridBpm": 88,
+   "phase": 0.197
   },
   {
    "id": "2-4-ankara-ritim-tempo-90",
@@ -109,7 +117,9 @@
    "file": "rhythms/2-4-ankara-ritim-tempo-90.mp3",
    "duration": 197.36,
    "loopScore": 0.89,
-   "size": 3158979
+   "size": 3158979,
+   "gridBpm": 90,
+   "phase": 0.847
   },
   {
    "id": "2-4-ankara-ritim-tempo-95",
@@ -121,7 +131,9 @@
    "file": "rhythms/2-4-ankara-ritim-tempo-95.mp3",
    "duration": 198.36,
    "loopScore": 0.89,
-   "size": 3174862
+   "size": 3174862,
+   "gridBpm": 95,
+   "phase": 0.864
   },
   {
    "id": "2-4-ankara-ritim-1-tempo-90",
@@ -133,7 +145,9 @@
    "file": "rhythms/2-4-ankara-ritim-1-tempo-90.mp3",
    "duration": 170.81,
    "loopScore": 0.95,
-   "size": 2733915
+   "size": 2733915,
+   "gridBpm": 89.91,
+   "phase": 1.329
   },
   {
    "id": "2-4-ankara-ritim-2-tempo-90",
@@ -145,7 +159,9 @@
    "file": "rhythms/2-4-ankara-ritim-2-tempo-90.mp3",
    "duration": 170.81,
    "loopScore": 0.98,
-   "size": 2733915
+   "size": 2733915,
+   "gridBpm": 89.91,
+   "phase": 1.323
   },
   {
    "id": "2-4-ankara-ritim-3-tempo-95",
@@ -157,7 +173,9 @@
    "file": "rhythms/2-4-ankara-ritim-3-tempo-95.mp3",
    "duration": 197.22,
    "loopScore": 0.95,
-   "size": 3156471
+   "size": 3156471,
+   "gridBpm": 94.91,
+   "phase": 0.841
   },
   {
    "id": "2-4-ankara-ritim-4-tempo-88",
@@ -169,7 +187,9 @@
    "file": "rhythms/2-4-ankara-ritim-4-tempo-88.mp3",
    "duration": 174.7,
    "loopScore": 0.96,
-   "size": 2796191
+   "size": 2796191,
+   "gridBpm": 87.91,
+   "phase": 1.193
   },
   {
    "id": "2-4-ankara-ritim-bol-kasikli-tempo-82",
@@ -181,7 +201,9 @@
    "file": "rhythms/2-4-ankara-ritim-bol-kasikli-tempo-82.mp3",
    "duration": 193.75,
    "loopScore": 0.85,
-   "size": 3100883
+   "size": 3100883,
+   "gridBpm": 82.98,
+   "phase": 1.216
   },
   {
    "id": "2-4-ankara-oyun-havas-ritim-tempo-78",
@@ -193,7 +215,9 @@
    "file": "rhythms/2-4-ankara-oyun-havas-ritim-tempo-78.mp3",
    "duration": 187,
    "loopScore": 0.92,
-   "size": 2993049
+   "size": 2993049,
+   "gridBpm": 76.99,
+   "phase": 0.924
   },
   {
    "id": "2-4-bateri-2-4-ritim-tempo-90",
@@ -205,7 +229,9 @@
    "file": "rhythms/2-4-bateri-2-4-ritim-tempo-90.mp3",
    "duration": 197.35,
    "loopScore": 0.89,
-   "size": 3158561
+   "size": 3158561,
+   "gridBpm": 90,
+   "phase": 0.006
   },
   {
    "id": "2-4-bayon-ritim-tempo-110",
@@ -217,7 +243,9 @@
    "file": "rhythms/2-4-bayon-ritim-tempo-110.mp3",
    "duration": 192.01,
    "loopScore": 0.95,
-   "size": 3073297
+   "size": 3073297,
+   "gridBpm": 110,
+   "phase": 0.731
   },
   {
    "id": "2-4-bayon-ritim-tempo-95",
@@ -229,7 +257,9 @@
    "file": "rhythms/2-4-bayon-ritim-tempo-95.mp3",
    "duration": 192.02,
    "loopScore": 0.87,
-   "size": 3073297
+   "size": 3073297,
+   "gridBpm": 95,
+   "phase": 0.534
   },
   {
    "id": "2-4-bayon-ritim-1",
@@ -242,7 +272,9 @@
    "bpmEstimated": true,
    "duration": 175.47,
    "loopScore": 0.98,
-   "size": 2808729
+   "size": 2808729,
+   "gridBpm": 93,
+   "phase": 0.377
   },
   {
    "id": "2-4-darbuka-2-4-ritim-tempo-90",
@@ -254,7 +286,9 @@
    "file": "rhythms/2-4-darbuka-2-4-ritim-tempo-90.mp3",
    "duration": 186.68,
    "loopScore": 0.95,
-   "size": 2988034
+   "size": 2988034,
+   "gridBpm": 90,
+   "phase": 0.006
   },
   {
    "id": "2-4-kasikli-oyun-havas-ritim-tempo-100",
@@ -266,7 +300,9 @@
    "file": "rhythms/2-4-kasikli-oyun-havas-ritim-tempo-100.mp3",
    "duration": 172.87,
    "loopScore": 0.93,
-   "size": 2766933
+   "size": 2766933,
+   "gridBpm": 99.95,
+   "phase": 0.383
   },
   {
    "id": "2-4-kasikli-oyun-havas-ritim-tempo-100-20dk",
@@ -278,7 +314,9 @@
    "file": "rhythms/2-4-kasikli-oyun-havas-ritim-tempo-100-20dk.mp3",
    "duration": 190.83,
    "loopScore": 0.73,
-   "size": 3054489
+   "size": 3054489,
+   "gridBpm": 100,
+   "phase": 0.424
   },
   {
    "id": "2-4-kasikli-oyun-havas-ritim-tempo-85",
@@ -290,7 +328,9 @@
    "file": "rhythms/2-4-kasikli-oyun-havas-ritim-tempo-85.mp3",
    "duration": 197.01,
    "loopScore": 0.82,
-   "size": 3153128
+   "size": 3153128,
+   "gridBpm": 84.96,
+   "phase": 0.093
   },
   {
    "id": "2-4-kaval-havas-ritim-tempo-78",
@@ -302,7 +342,9 @@
    "file": "rhythms/2-4-kaval-havas-ritim-tempo-78.mp3",
    "duration": 178.47,
    "loopScore": 0.97,
-   "size": 2856377
+   "size": 2856377,
+   "gridBpm": 78,
+   "phase": 1.234
   },
   {
    "id": "2-4-misket-ritim-tempo-85",
@@ -314,7 +356,9 @@
    "file": "rhythms/2-4-misket-ritim-tempo-85.mp3",
    "duration": 189.18,
    "loopScore": 0.97,
-   "size": 3028158
+   "size": 3028158,
+   "gridBpm": 85,
+   "phase": 0.476
   },
   {
    "id": "2-4-oyun-havas-ritim-tempo-100-25dakika",
@@ -326,7 +370,9 @@
    "file": "rhythms/2-4-oyun-havas-ritim-tempo-100-25dakika.mp3",
    "duration": 175.23,
    "loopScore": 0.83,
-   "size": 2804968
+   "size": 2804968,
+   "gridBpm": 100,
+   "phase": 0.412
   },
   {
    "id": "2-4-oyun-havas-ritim-tempo-105",
@@ -338,7 +384,9 @@
    "file": "rhythms/2-4-oyun-havas-ritim-tempo-105.mp3",
    "duration": 177.14,
    "loopScore": 0.97,
-   "size": 2835479
+   "size": 2835479,
+   "gridBpm": 105,
+   "phase": 0.856
   },
   {
    "id": "2-4-oyun-havas-ritim-1",
@@ -351,7 +399,9 @@
    "bpmEstimated": true,
    "duration": 195.92,
    "loopScore": 0.95,
-   "size": 3135573
+   "size": 3135573,
+   "gridBpm": 98,
+   "phase": 1.187
   },
   {
    "id": "2-4-pop-ritim",
@@ -364,7 +414,9 @@
    "bpmEstimated": true,
    "duration": 176.3,
    "loopScore": 0.98,
-   "size": 2821686
+   "size": 2821686,
+   "gridBpm": 130,
+   "phase": 0.296
   },
   {
    "id": "2-4-super-grani-ritim-tempo80",
@@ -376,7 +428,9 @@
    "file": "rhythms/2-4-super-grani-ritim-tempo80.mp3",
    "duration": 194.98,
    "loopScore": 0.87,
-   "size": 3120945
+   "size": 3120945,
+   "gridBpm": 80,
+   "phase": 1
   },
   {
    "id": "2-4-siseleler-2-4-ritim-tempo-100",
@@ -388,7 +442,9 @@
    "file": "rhythms/2-4-siseleler-2-4-ritim-tempo-100.mp3",
    "duration": 184.82,
    "loopScore": 0.82,
-   "size": 2958359
+   "size": 2958359,
+   "gridBpm": 100,
+   "phase": 0.412
   },
   {
    "id": "2-4-topal-oyun-havas-ritim",
@@ -401,7 +457,9 @@
    "bpmEstimated": true,
    "duration": 191.98,
    "loopScore": 0.94,
-   "size": 3072879
+   "size": 3072879,
+   "gridBpm": 75,
+   "phase": 1.584
   },
   {
    "id": "3-4-ritim-tempo-73",
@@ -413,7 +471,9 @@
    "file": "rhythms/3-4-ritim-tempo-73.mp3",
    "duration": 177.54,
    "loopScore": 0.98,
-   "size": 2841748
+   "size": 2841748,
+   "gridBpm": 73,
+   "phase": 0.551
   },
   {
    "id": "4-4-oryantal-ritim",
@@ -426,7 +486,9 @@
    "bpmEstimated": true,
    "duration": 177.23,
    "loopScore": 0.97,
-   "size": 2836733
+   "size": 2836733,
+   "gridBpm": 86.65,
+   "phase": 1.896
   },
   {
    "id": "4-4-oryantal-ritim-tempo-130",
@@ -438,7 +500,9 @@
    "file": "rhythms/4-4-oryantal-ritim-tempo-130.mp3",
    "duration": 171.7,
    "loopScore": 0.78,
-   "size": 2748125
+   "size": 2748125,
+   "gridBpm": 130,
+   "phase": 1.466
   },
   {
    "id": "4-4-oryantal-ritim-tempo-150",
@@ -450,7 +514,9 @@
    "file": "rhythms/4-4-oryantal-ritim-tempo-150.mp3",
    "duration": 195.2,
    "loopScore": 0.91,
-   "size": 3124288
+   "size": 3124288,
+   "gridBpm": 150,
+   "phase": 0.795
   },
   {
    "id": "4-4-oryantal-azize-mevlana-ritim-tempo-155",
@@ -462,7 +528,9 @@
    "file": "rhythms/4-4-oryantal-azize-mevlana-ritim-tempo-155.mp3",
    "duration": 188.93,
    "loopScore": 0.9,
-   "size": 3023978
+   "size": 3023978,
+   "gridBpm": 155,
+   "phase": 1.301
   },
   {
    "id": "4-4-super-darbuka-sov-ritim-tempo-160",
@@ -474,7 +542,9 @@
    "file": "rhythms/4-4-super-darbuka-sov-ritim-tempo-160.mp3",
    "duration": 196.96,
    "loopScore": 0.23,
-   "size": 3152292
+   "size": 3152292,
+   "gridBpm": 160,
+   "phase": 1.235
   },
   {
    "id": "4-4-super-darbuka-sov-solo-ritim-1",
@@ -487,7 +557,9 @@
    "bpmEstimated": true,
    "duration": 172.82,
    "loopScore": 0.78,
-   "size": 2766097
+   "size": 2766097,
+   "gridBpm": 83.33,
+   "phase": 0.644
   },
   {
    "id": "4-4-super-darbuka-sov-solo-ritim-2",
@@ -500,7 +572,9 @@
    "bpmEstimated": true,
    "duration": 198.01,
    "loopScore": 0.76,
-   "size": 3169428
+   "size": 3169428,
+   "gridBpm": 80,
+   "phase": 1.011
   },
   {
    "id": "4-4-trk-ritim-tempo-125",
@@ -512,7 +586,9 @@
    "file": "rhythms/4-4-trk-ritim-tempo-125.mp3",
    "duration": 197.77,
    "loopScore": 0.86,
-   "size": 3165248
+   "size": 3165248,
+   "gridBpm": 125,
+   "phase": 0.834
   },
   {
    "id": "4-4-trk-ritim-1-tempo-125",
@@ -524,7 +600,9 @@
    "file": "rhythms/4-4-trk-ritim-1-tempo-125.mp3",
    "duration": 195.85,
    "loopScore": 0.98,
-   "size": 3134737
+   "size": 3134737,
+   "gridBpm": 125,
+   "phase": 1.608
   },
   {
    "id": "5-8-ritim-tempo-99",
@@ -536,7 +614,9 @@
    "file": "rhythms/5-8-ritim-tempo-99.mp3",
    "duration": 171.22,
    "loopScore": 0.62,
-   "size": 2740602
+   "size": 2740602,
+   "gridBpm": 99,
+   "phase": 0.489
   },
   {
    "id": "5-8-ritim-tempo-82",
@@ -548,7 +628,9 @@
    "file": "rhythms/5-8-ritim-tempo-82.mp3",
    "duration": 193.9,
    "loopScore": 0.85,
-   "size": 3103391
+   "size": 3103391,
+   "gridBpm": 82,
+   "phase": 1.144
   },
   {
    "id": "5-8-tsm-ritim-tempo-80",
@@ -560,7 +642,9 @@
    "file": "rhythms/5-8-tsm-ritim-tempo-80.mp3",
    "duration": 198.75,
    "loopScore": 0.92,
-   "size": 3181131
+   "size": 3181131,
+   "gridBpm": 80,
+   "phase": 0.25
   },
   {
    "id": "5-8-trk-ritim-1",
@@ -573,7 +657,9 @@
    "bpmEstimated": true,
    "duration": 179.36,
    "loopScore": 0.79,
-   "size": 2871005
+   "size": 2871005,
+   "gridBpm": 97.02,
+   "phase": 0.671
   },
   {
    "id": "6-8-azeri-ritim-1",
@@ -586,7 +672,9 @@
    "bpmEstimated": true,
    "duration": 181.85,
    "loopScore": 0.81,
-   "size": 2910711
+   "size": 2910711,
+   "gridBpm": 126.69,
+   "phase": 0.982
   },
   {
    "id": "6-8-thm-ritim-tempo-110",
@@ -598,7 +686,9 @@
    "file": "rhythms/6-8-thm-ritim-tempo-110.mp3",
    "duration": 189.81,
    "loopScore": 0.95,
-   "size": 3038189
+   "size": 3038189,
+   "gridBpm": 110,
+   "phase": 0.18
   },
   {
    "id": "6-8-tsm-68-ritim",
@@ -611,7 +701,9 @@
    "bpmEstimated": true,
    "duration": 193.84,
    "loopScore": 0.78,
-   "size": 3102555
+   "size": 3102555,
+   "gridBpm": 104,
+   "phase": 0.623
   },
   {
    "id": "7-8-halk-ritim-tempo-130",
@@ -623,7 +715,9 @@
    "file": "rhythms/7-8-halk-ritim-tempo-130.mp3",
    "duration": 186.94,
    "loopScore": 0.77,
-   "size": 2992213
+   "size": 2992213,
+   "gridBpm": 130,
+   "phase": 0.543
   },
   {
    "id": "7-8-laz-ritim",
@@ -636,7 +730,9 @@
    "bpmEstimated": true,
    "duration": 189.81,
    "loopScore": 0.94,
-   "size": 3038189
+   "size": 3038189,
+   "gridBpm": 71.42,
+   "phase": 2.1
   },
   {
    "id": "9-8-halk-ritim-tempo-75",
@@ -648,7 +744,9 @@
    "file": "rhythms/9-8-halk-ritim-tempo-75.mp3",
    "duration": 190.8,
    "loopScore": 0.96,
-   "size": 3053653
+   "size": 3053653,
+   "gridBpm": 75,
+   "phase": 2.795
   },
   {
    "id": "9-8-roman-ritim-1-tempo-135",
@@ -660,7 +758,9 @@
    "file": "rhythms/9-8-roman-ritim-1-tempo-135.mp3",
    "duration": 194.01,
    "loopScore": 0.97,
-   "size": 3105480
+   "size": 3105480,
+   "gridBpm": 135,
+   "phase": 1.567
   },
   {
    "id": "10-8-tsm-ritim-tempo-80",
@@ -672,7 +772,9 @@
    "file": "rhythms/10-8-tsm-ritim-tempo-80.mp3",
    "duration": 181.88,
    "loopScore": 0.76,
-   "size": 2911129
+   "size": 2911129,
+   "gridBpm": 80,
+   "phase": 2.125
   },
   {
    "id": "dem-fon-muzik-do",
@@ -754,7 +856,9 @@
    "file": "rhythms/halay-2-4-bateri-halay-ritim-tempo-100.mp3",
    "duration": 182.48,
    "loopScore": 0.87,
-   "size": 2920742
+   "size": 2920742,
+   "gridBpm": 99.95,
+   "phase": 0.389
   },
   {
    "id": "halay-2-4-bateri-halay-ritim-tempo-125",
@@ -766,7 +870,9 @@
    "file": "rhythms/halay-2-4-bateri-halay-ritim-tempo-125.mp3",
    "duration": 171.88,
    "loopScore": 0.87,
-   "size": 2751051
+   "size": 2751051,
+   "gridBpm": 124.94,
+   "phase": 0.62
   },
   {
    "id": "halay-2-4-bateri-halay-ritim-tempo-90",
@@ -778,7 +884,9 @@
    "file": "rhythms/halay-2-4-bateri-halay-ritim-tempo-90.mp3",
    "duration": 194.7,
    "loopScore": 0.86,
-   "size": 3116347
+   "size": 3116347,
+   "gridBpm": 90,
+   "phase": 0
   },
   {
    "id": "halay-bateri-halay-ritim-tempo-100",
@@ -790,7 +898,9 @@
    "file": "rhythms/halay-bateri-halay-ritim-tempo-100.mp3",
    "duration": 187.22,
    "loopScore": 0.9,
-   "size": 2996811
+   "size": 2996811,
+   "gridBpm": 100,
+   "phase": 1.012
   },
   {
    "id": "halay-2-4-davul-halay-ritim-2",
@@ -803,7 +913,9 @@
    "bpmEstimated": true,
    "duration": 173.17,
    "loopScore": 0.77,
-   "size": 2771949
+   "size": 2771949,
+   "gridBpm": 83.3,
+   "phase": 0.447
   },
   {
    "id": "halay-esarbini-yan-balama-ritim-tempo-127",
@@ -815,7 +927,9 @@
    "file": "rhythms/halay-esarbini-yan-balama-ritim-tempo-127.mp3",
    "duration": 176.65,
    "loopScore": 0.98,
-   "size": 2827537
+   "size": 2827537,
+   "gridBpm": 127,
+   "phase": 0.401
   },
   {
    "id": "halay-grani-ritim-tempo-77",
@@ -827,7 +941,9 @@
    "file": "rhythms/halay-grani-ritim-tempo-77.mp3",
    "duration": 187,
    "loopScore": 0.97,
-   "size": 2993049
+   "size": 2993049,
+   "gridBpm": 77,
+   "phase": 1.342
   },
   {
    "id": "halay-2-4-halay-ritim-tempo-100",
@@ -839,7 +955,9 @@
    "file": "rhythms/halay-2-4-halay-ritim-tempo-100.mp3",
    "duration": 172.84,
    "loopScore": 0.99,
-   "size": 2766515
+   "size": 2766515,
+   "gridBpm": 100,
+   "phase": 0.116
   },
   {
    "id": "halay-2-4-halay-ritim-tempo-90",
@@ -851,7 +969,9 @@
    "file": "rhythms/halay-2-4-halay-ritim-tempo-90.mp3",
    "duration": 172.03,
    "loopScore": 0.99,
-   "size": 2753559
+   "size": 2753559,
+   "gridBpm": 90,
+   "phase": 1.015
   },
   {
    "id": "halay-2-4-halay-ritim-tempo-135",
@@ -863,7 +983,9 @@
    "file": "rhythms/halay-2-4-halay-ritim-tempo-135.mp3",
    "duration": 170.69,
    "loopScore": 0.98,
-   "size": 2732243
+   "size": 2732243,
+   "gridBpm": 135,
+   "phase": 0.238
   },
   {
    "id": "halay-ritim-tempo-95",
@@ -875,7 +997,9 @@
    "file": "rhythms/halay-ritim-tempo-95.mp3",
    "duration": 184.44,
    "loopScore": 0.95,
-   "size": 2952089
+   "size": 2952089,
+   "gridBpm": 95,
+   "phase": 0.534
   },
   {
    "id": "halay-2-4-halay-ritim1-tempo-100",
@@ -887,7 +1011,9 @@
    "file": "rhythms/halay-2-4-halay-ritim1-tempo-100.mp3",
    "duration": 183.62,
    "loopScore": 0.98,
-   "size": 2939133
+   "size": 2939133,
+   "gridBpm": 100,
+   "phase": 0.104
   },
   {
    "id": "halay-6-8-halay-ritim-1-tempo-118",
@@ -899,7 +1025,9 @@
    "file": "rhythms/halay-6-8-halay-ritim-1-tempo-118.mp3",
    "duration": 178.99,
    "loopScore": 0.99,
-   "size": 2865154
+   "size": 2865154,
+   "gridBpm": 118,
+   "phase": 1.162
   },
   {
    "id": "halay-2-4-halay-ritim-2-tempo-95",
@@ -911,7 +1039,9 @@
    "file": "rhythms/halay-2-4-halay-ritim-2-tempo-95.mp3",
    "duration": 197.22,
    "loopScore": 0.98,
-   "size": 3156471
+   "size": 3156471,
+   "gridBpm": 94.91,
+   "phase": 0.835
   },
   {
    "id": "halay-remix-ritim-tempo-104",
@@ -923,7 +1053,9 @@
    "file": "rhythms/halay-remix-ritim-tempo-104.mp3",
    "duration": 186.94,
    "loopScore": 0.89,
-   "size": 2992213
+   "size": 2992213,
+   "gridBpm": 104,
+   "phase": 0.093
   },
   {
    "id": "halay-halebi-ritim-tempo78",
@@ -935,7 +1067,9 @@
    "file": "rhythms/halay-halebi-ritim-tempo78.mp3",
    "duration": 175.4,
    "loopScore": 0.51,
-   "size": 2807475
+   "size": 2807475,
+   "gridBpm": 78,
+   "phase": 0.92
   },
   {
    "id": "halay-yavas-ve-hzl-halay-ritim-tempo-80-120",
@@ -973,7 +1107,9 @@
    "file": "rhythms/slow-turku-arabesk-vahde-ritim-tempo-78.mp3",
    "duration": 172.32,
    "loopScore": 0.86,
-   "size": 2758156
+   "size": 2758156,
+   "gridBpm": 78,
+   "phase": 1.234
   },
   {
    "id": "slow-turku-arabesk-vahde-ritim-1-tempo-80",
@@ -985,7 +1121,9 @@
    "file": "rhythms/slow-turku-arabesk-vahde-ritim-1-tempo-80.mp3",
    "duration": 186,
    "loopScore": 0.94,
-   "size": 2977167
+   "size": 2977167,
+   "gridBpm": 80,
+   "phase": 2.5
   },
   {
    "id": "slow-turku-bati-slov-ritim-tempo-110",
@@ -997,7 +1135,9 @@
    "file": "rhythms/slow-turku-bati-slov-ritim-tempo-110.mp3",
    "duration": 189.81,
    "loopScore": 0.87,
-   "size": 3038189
+   "size": 3038189,
+   "gridBpm": 110,
+   "phase": 1.271
   },
   {
    "id": "slow-turku-slov-turku-ritim-tempo-115",
@@ -1009,7 +1149,9 @@
    "file": "rhythms/slow-turku-slov-turku-ritim-tempo-115.mp3",
    "duration": 177.39,
    "loopScore": 0.89,
-   "size": 2839240
+   "size": 2839240,
+   "gridBpm": 115,
+   "phase": 1.386
   },
   {
    "id": "slow-turku-ritim-tempo-105",
@@ -1021,7 +1163,9 @@
    "file": "rhythms/slow-turku-ritim-tempo-105.mp3",
    "duration": 198.84,
    "loopScore": 0.79,
-   "size": 3182803
+   "size": 3182803,
+   "gridBpm": 105,
+   "phase": 1.135
   },
   {
    "id": "slow-turku-slov-turku-ritim-tempo-125",
@@ -1033,7 +1177,9 @@
    "file": "rhythms/slow-turku-slov-turku-ritim-tempo-125.mp3",
    "duration": 192.01,
    "loopScore": 0.9,
-   "size": 3073297
+   "size": 3073297,
+   "gridBpm": 125,
+   "phase": 1.603
   },
   {
    "id": "slow-turku-turku-ritim-tempo-114",
@@ -1045,7 +1191,9 @@
    "file": "rhythms/slow-turku-turku-ritim-tempo-114.mp3",
    "duration": 191.61,
    "loopScore": 0.96,
-   "size": 3067028
+   "size": 3067028,
+   "gridBpm": 114,
+   "phase": 2.009
   },
   {
    "id": "slow-turku-turku-ritim-1-tempo-110",
@@ -1057,7 +1205,9 @@
    "file": "rhythms/slow-turku-turku-ritim-1-tempo-110.mp3",
    "duration": 170.18,
    "loopScore": 0.95,
-   "size": 2723884
+   "size": 2723884,
+   "gridBpm": 110,
+   "phase": 0.18
   },
   {
    "id": "ciftetelli-ritim-tempo-98",
@@ -1069,7 +1219,9 @@
    "file": "rhythms/ciftetelli-ritim-tempo-98.mp3",
    "duration": 181.28,
    "loopScore": 0.86,
-   "size": 2901516
+   "size": 2901516,
+   "gridBpm": 97.95,
+   "phase": 1.782
   },
   {
    "id": "ciftetelli-ritim-tempo-95",
@@ -1081,7 +1233,9 @@
    "file": "rhythms/ciftetelli-ritim-tempo-95.mp3",
    "duration": 171.8,
    "loopScore": 0.9,
-   "size": 2749797
+   "size": 2749797,
+   "gridBpm": 95,
+   "phase": 1.484
   },
   {
    "id": "ciftetelli-davul-ritim-2-2018",
@@ -1094,7 +1248,9 @@
    "bpmEstimated": true,
    "duration": 170.5,
    "loopScore": 0.96,
-   "size": 2729317
+   "size": 2729317,
+   "gridBpm": 76,
+   "phase": 3.036
   }
  ]
 }

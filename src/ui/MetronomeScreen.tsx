@@ -8,6 +8,7 @@ import { TapTempo, tempoRange } from '../audio/tempo';
 import {
   cycleMark, groupingOptions, isGrouped, meterForRhythm, meterLabel, USULS, UNITS, withMeter, withUsul, type SoundId, type Subdivision,
 } from '../audio/usuls';
+import { shownBpm } from '../data/rhythms';
 import { useStore } from '../lib/store';
 import { Header } from './common';
 import { Icon } from './icons';
@@ -80,7 +81,7 @@ export function MetronomeScreen() {
   const tap = useRef(new TapTempo());
   const r = currentRhythm();
   const bpm = Math.round(s.follow ? pl.bpm * s.factor : s.bpm);
-  const [lo, hi] = s.follow ? tempoRange(r?.bpm).map((x) => Math.round(x * s.factor)) : [30, 300];
+  const [lo, hi] = s.follow ? tempoRange(shownBpm(r)).map((x) => Math.round(x * s.factor)) : [30, 300];
 
   const setBpm = (v: number) => {
     if (s.follow) setRhythmBpm(v / s.factor);
@@ -162,7 +163,9 @@ export function MetronomeScreen() {
               Ritmin ölçüsünü kullan ({r.meter})
             </button>
           )}
-          <p className="hint">Tıklar ritmin vuruşuna oturmazsa ritim çalarken ölçünün 1. vuruşunda “Bir'e dokun”a basın.</p>
+          <p className="hint">
+            Tempo ritme bağlıyken metronom ritmin çalan yerine kilitlenir; tempo değişse de kaymaz. 1. vuruş yanlış yerdeyse ritim çalarken ölçünün başında “Bir'e dokun”a basın, o ritim için hatırlanır.
+          </p>
         </section>
 
         <section className="card">

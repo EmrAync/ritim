@@ -120,7 +120,7 @@ export const DEFAULT_METRO: MetroSettings = {
   strokes: false,
   subdivision: 1,
   volume: 0.8,
-  follow: false,
+  follow: true,
   factor: 1,
   withRhythm: false,
 };

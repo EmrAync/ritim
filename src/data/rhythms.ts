@@ -13,6 +13,12 @@ export interface Rhythm {
   bpmTo?: number;
   /** Tempo guessed from the audio (no tempo in the file name). */
   bpmEstimated?: boolean;
+  /** Recording kept whole (tempo changes along it), not a short loop. */
+  whole?: boolean;
+  /** Measured quarter-note tempo of the loop (more exact than the name). */
+  gridBpm?: number;
+  /** Seconds from the loop start to a bar start (metronome lock). */
+  phase?: number;
   file: string;
   /** Seconds */
   duration: number;
@@ -49,6 +55,9 @@ export function sanitizeCatalog(raw: unknown): Pick<RhythmCatalog, 'categories' 
       bpm: typeof x.bpm === 'number' && x.bpm >= 20 && x.bpm <= 400 ? x.bpm : undefined,
       bpmTo: typeof x.bpmTo === 'number' ? x.bpmTo : undefined,
       bpmEstimated: x.bpmEstimated === true,
+      whole: x.whole === true,
+      gridBpm: typeof x.gridBpm === 'number' && x.gridBpm >= 20 && x.gridBpm <= 400 ? x.gridBpm : undefined,
+      phase: typeof x.phase === 'number' && x.phase >= 0 ? x.phase : undefined,
       file: x.file,
       duration: typeof x.duration === 'number' ? x.duration : 0,
       size: typeof x.size === 'number' ? x.size : 0,
@@ -70,6 +79,15 @@ export async function loadCatalog(): Promise<void> {
 
 export const rhythmById = (id: string | undefined): Rhythm | undefined =>
   id ? catalog.get().rhythms.find((r) => r.id === id) : undefined;
+
+/** Exact tempo the loop plays at rate 1 (for the playback rate and the metronome). */
+export const exactBpm = (r: Rhythm | undefined): number | undefined => r?.gridBpm ?? r?.bpm;
+
+/** Recorded tempo as shown to the user. */
+export const shownBpm = (r: Rhythm | undefined): number | undefined => {
+  const b = exactBpm(r);
+  return b === undefined ? undefined : Math.round(b);
+};
 
 export const categoryLabel = (id: string): string => catalog.get().categories.find((c) => c.id === id)?.label ?? id;
 

@@ -1,13 +1,14 @@
-// Rhythm player: one looping <audio> element routed through Web Audio (for
-// volume and fades, which iOS ignores on the element itself). Tempo changes
-// use the browser's pitch-preserving playbackRate; files are played from a
-// downloaded Blob so they also work offline.
+// Rhythm player: plays the selected loop through Signalsmith Stretch
+// (instant, smooth tempo changes; exact loop position for the metronome),
+// or through <audio> where that is not available. Volume and fades go
+// through a Web Audio gain. Files come from the device cache when stored.
 
 import { getRhythmBlob } from '../data/offline';
 import { listById } from '../data/playlists';
-import { catalog, rhythmById, type Rhythm } from '../data/rhythms';
+import { catalog, exactBpm, rhythmById, shownBpm, type Rhythm } from '../data/rhythms';
 import { createStore, persist, readLocal, writeLocal } from '../lib/store';
-import { masterOut, unlockAudio } from './context';
+import { audioContext, masterOut, unlockAudio } from './context';
+import { ElementEngine, StretchEngine, stretchSupported, type RhythmEngine } from './engines';
 import { clamp, rateFor, tempoRange } from './tempo';
 
 export interface QueueRef {
@@ -19,6 +20,7 @@ export interface PlayerState {
   rhythmId?: string;
   bpm: number;
   playing: boolean;
+  /** Downloading or decoding the rhythm. */
   loading: boolean;
   loadPct: number;
   error?: string;
@@ -28,7 +30,7 @@ export interface PlayerState {
   endsAt?: number;
   fading: boolean;
   volume: number;
-  /** Playing from a playlist: prev/next move inside it. */
+  /** Playing order: a playlist (prev/next move inside it) or, when unset, all rhythms. */
   queue?: QueueRef;
 }
 
@@ -71,68 +73,93 @@ const tempos: Record<string, number> = (() => {
 
 export const currentRhythm = (): Rhythm | undefined => rhythmById(player.get().rhythmId);
 
-let audio: HTMLAudioElement | undefined;
 let gain: GainNode | undefined;
-let blobUrl: string | undefined;
-let loadedId: string | undefined;
-let primed = false;
-let loadToken = 0;
+let element: ElementEngine | undefined;
+let stretch: Promise<StretchEngine | undefined> | undefined;
+let stretchBroken = !stretchSupported();
+let active: RhythmEngine | undefined;
+let token = 0;
 let ticker: ReturnType<typeof setInterval> | undefined;
 let lastPos = 0;
+let appliedRate = 0;
 let wakeLock: { release(): Promise<void> } | undefined;
 
 const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
-function element(): HTMLAudioElement {
-  if (!audio) {
-    audio = new Audio();
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.setAttribute('playsinline', '');
-    const a = audio as HTMLAudioElement & { mozPreservesPitch?: boolean; webkitPreservesPitch?: boolean };
-    a.preservesPitch = true;
-    a.mozPreservesPitch = true;
-    a.webkitPreservesPitch = true;
-    audio.addEventListener('error', () => {
-      if (audio?.src && audio.src !== SILENCE) player.set((s) => ({ ...s, error: 'Ses dosyası çalınamadı.' }));
-    });
+/** Audio graph; the first call must be inside a tap (iOS). */
+function out(): GainNode {
+  if (!gain) {
+    const ctx = audioContext();
+    gain = ctx.createGain();
+    gain.gain.value = player.get().volume;
+    gain.connect(masterOut());
   }
-  return audio;
+  return gain;
 }
 
-function connect(): void {
-  if (gain) return;
-  const ctx = unlockAudio();
-  const src = ctx.createMediaElementSource(element());
-  gain = ctx.createGain();
-  gain.gain.value = player.get().volume;
-  src.connect(gain).connect(masterOut());
+function elementEngine(): ElementEngine {
+  if (!element) element = new ElementEngine(audioContext(), out());
+  return element;
 }
 
-function applyRate(): void {
-  if (!audio) return;
-  const r = currentRhythm();
-  audio.playbackRate = rateFor(r?.bpm, player.get().bpm);
-}
-
-async function load(r: Rhythm, token: number): Promise<boolean> {
-  if (loadedId === r.id && blobUrl) return true;
-  player.set((s) => ({ ...s, loading: true, loadPct: 0 }));
-  const blob = await getRhythmBlob(r, (f) => {
-    if (token === loadToken) player.set((s) => ({ ...s, loadPct: f }));
+async function stretchEngine(): Promise<StretchEngine | undefined> {
+  if (stretchBroken) return undefined;
+  stretch ??= StretchEngine.create(audioContext(), out()).catch((e) => {
+    console.warn('Signalsmith unavailable, using <audio>', e);
+    stretchBroken = true;
+    return undefined;
   });
-  if (token !== loadToken) return false;
-  if (blobUrl) URL.revokeObjectURL(blobUrl);
-  blobUrl = URL.createObjectURL(blob);
-  loadedId = r.id;
-  element().src = blobUrl;
-  return true;
+  return stretch;
+}
+
+// The selected rhythm decoded ahead of START (decoding takes a second or more on a phone).
+let pre: { id: string; buf: Promise<AudioBuffer | undefined> } | undefined;
+
+/** Starts downloading and decoding a rhythm in the background. */
+export function preload(r: Rhythm | undefined = currentRhythm()): void {
+  if (!r) return;
+  if (r.whole || stretchBroken) {
+    void getRhythmBlob(r).catch(() => undefined);
+    return;
+  }
+  if (pre?.id === r.id) return;
+  pre = {
+    id: r.id,
+    buf: getRhythmBlob(r)
+      .then(async (b) => audioContext().decodeAudioData(await b.arrayBuffer()))
+      .catch(() => undefined),
+  };
+}
+
+async function engineFor(r: Rhythm): Promise<RhythmEngine> {
+  // Very long recordings would need too much memory decoded: stream them.
+  if (!r.whole) {
+    const s = await stretchEngine();
+    if (s) return s;
+  }
+  return elementEngine();
+}
+
+const rateNow = (): number => rateFor(exactBpm(currentRhythm()), player.get().bpm);
+
+/** Downloads and prepares a rhythm; returns its engine (undefined when superseded). */
+async function prepare(r: Rhythm, my: number): Promise<RhythmEngine | undefined> {
+  const blob = await getRhythmBlob(r, (f) => {
+    if (my === token) player.set((s) => ({ ...s, loadPct: f }));
+  });
+  if (my !== token) return undefined;
+  const engine = await engineFor(r);
+  if (my !== token) return undefined;
+  const decoded = engine.kind === 'stretch' && pre?.id === r.id ? await pre.buf : undefined;
+  if (my !== token) return undefined;
+  await engine.load(r, blob, decoded);
+  if (pre?.id === r.id) pre = undefined;
+  return my === token ? engine : undefined;
 }
 
 function setGain(v: number, seconds: number): void {
   if (!gain) return;
-  const ctx = gain.context;
-  const t = ctx.currentTime;
+  const t = gain.context.currentTime;
   gain.gain.cancelScheduledValues(t);
   gain.gain.setValueAtTime(gain.gain.value, t);
   gain.gain.linearRampToValueAtTime(v, t + Math.max(0.01, seconds));
@@ -153,10 +180,10 @@ function releaseWakeLock(): void {
 }
 
 function tick(): void {
-  const a = audio;
-  if (!a) return;
-  const pos = a.currentTime;
-  const dur = Number.isFinite(a.duration) ? a.duration : currentRhythm()?.duration ?? 0;
+  if (!active) return;
+  const ctx = audioContext();
+  const pos = active.posAt(ctx.currentTime) ?? 0;
+  const dur = active.loopLen() || currentRhythm()?.duration || 0;
   let loops = progress.get().loops;
   if (pos + 1 < lastPos) loops++;
   lastPos = pos;
@@ -172,7 +199,7 @@ function tick(): void {
 }
 
 function updateMediaSession(): void {
-  const ms = navigator.mediaSession;
+  const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
   const r = currentRhythm();
   if (!ms || !r || typeof MediaMetadata === 'undefined') return;
   ms.metadata = new MediaMetadata({ title: r.title, artist: `${r.meter ?? ''} · ${player.get().bpm} BPM`, album: 'Ritim' });
@@ -185,28 +212,27 @@ export function playRhythm(): void {
     player.set((s) => ({ ...s, error: 'Önce bir ritim seçin.' }));
     return;
   }
-  // Synchronous part: inside the tap, so iOS lets this element and context play later.
-  connect();
-  const a = element();
-  if (!primed) {
-    primed = true;
-    if (!a.src) {
-      a.src = SILENCE;
-      void a.play().catch(() => undefined);
-    }
-  }
-  const token = ++loadToken;
-  player.set((s) => ({ ...s, error: undefined }));
+  // Synchronous part, inside the tap: unlock the context and the <audio> element (iOS).
+  unlockAudio();
+  out();
+  const el = elementEngine();
+  el.prime(SILENCE);
+  const my = ++token;
+  active?.stop();
+  player.set((s) => ({ ...s, error: undefined, loading: true, loadPct: 0 }));
   void (async () => {
     try {
-      if (!(await load(r, token))) return;
-      a.currentTime = 0;
+      const engine = await prepare(r, my);
+      if (!engine) return;
+      if (active && active !== engine) active.stop();
+      active = engine;
+      setGain(0, 0.01);
+      appliedRate = rateNow();
+      await engine.start(appliedRate);
+      if (my !== token) return;
+      setGain(player.get().volume, 0.03);
       lastPos = 0;
-      progress.set({ pos: 0, dur: r.duration, loops: 0 });
-      applyRate();
-      setGain(player.get().volume, 0.02);
-      await a.play();
-      if (token !== loadToken) return;
+      progress.set({ pos: 0, dur: engine.loopLen() || r.duration, loops: 0 });
       const { timerMin } = player.get();
       player.set((s) => ({ ...s, playing: true, loading: false, fading: false, endsAt: timerMin ? Date.now() + timerMin * 60000 : undefined }));
       clearInterval(ticker);
@@ -214,8 +240,9 @@ export function playRhythm(): void {
       void requestWakeLock();
       updateMediaSession();
     } catch (e) {
-      if (token !== loadToken) return;
-      const msg = e instanceof Error && e.name === 'NotAllowedError' ? 'Başlatmak için START tuşuna tekrar dokunun.' : e instanceof Error ? e.message : String(e);
+      if (my !== token) return;
+      console.warn(e);
+      const msg = e instanceof Error && e.name === 'NotAllowedError' ? 'Başlatmak için START tuşuna tekrar dokunun.' : 'Ritim çalınamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
       player.set((s) => ({ ...s, playing: false, loading: false, error: msg }));
     }
   })();
@@ -223,14 +250,15 @@ export function playRhythm(): void {
 
 /** Stops with a short fade (no click). */
 export function stopRhythm(fade = 0.12): void {
-  const token = ++loadToken;
+  const my = ++token;
   clearInterval(ticker);
   ticker = undefined;
   setGain(0, fade);
+  const engine = active;
   setTimeout(() => {
-    // Not restarted meanwhile: pause and restore the level for the next START.
-    if (token !== loadToken) return;
-    audio?.pause();
+    // Not restarted meanwhile: stop the engine and restore the level for the next START.
+    if (my !== token) return;
+    engine?.stop();
     setGain(player.get().volume, 0.01);
   }, fade * 1000 + 30);
   player.set((s) => ({ ...s, playing: false, loading: false, fading: false, endsAt: undefined }));
@@ -244,7 +272,7 @@ export function toggleRhythm(): void {
 
 export function setBpm(bpm: number): void {
   const r = currentRhythm();
-  const [lo, hi] = tempoRange(r?.bpm);
+  const [lo, hi] = tempoRange(shownBpm(r));
   const v = clamp(Math.round(bpm), lo, hi);
   if (v === player.get().bpm) return;
   player.set((s) => ({ ...s, bpm: v }));
@@ -268,12 +296,16 @@ export function setVolume(v: number): void {
 export function selectRhythm(id: string, opts: { bpm?: number; queue?: QueueRef } = {}): void {
   const r = rhythmById(id);
   if (!r) return;
-  const bpm = opts.bpm ?? tempos[id] ?? r.bpm ?? 100;
-  const [lo, hi] = tempoRange(r.bpm);
+  const bpm = opts.bpm ?? tempos[id] ?? shownBpm(r) ?? 100;
+  const [lo, hi] = tempoRange(shownBpm(r));
+  const playing = player.get().playing || player.get().loading;
   player.set((s) => ({ ...s, rhythmId: id, bpm: clamp(Math.round(bpm), lo, hi), queue: opts.queue, error: undefined }));
-  if (player.get().playing || player.get().loading) playRhythm();
-  // Download in the background so START plays at once.
-  else void getRhythmBlob(r).catch(() => undefined);
+  if (playing) playRhythm();
+  else {
+    progress.set({ pos: 0, dur: r.duration, loops: 0 });
+    // Download and decode in the background so START plays at once.
+    preload(r);
+  }
   updateMediaSession();
 }
 
@@ -282,6 +314,15 @@ export function selectEntry(listId: string, index: number): void {
   const e = l?.entries[index];
   if (!e) return;
   selectRhythm(e.rhythmId, { bpm: e.bpm, queue: { listId, index } });
+}
+
+/** Chooses what ◀ ▶ walk through: a playlist from its first song, or all rhythms. */
+export function setOrder(listId: string | undefined): void {
+  if (!listId) {
+    player.set((s) => ({ ...s, queue: undefined }));
+    return;
+  }
+  selectEntry(listId, 0);
 }
 
 /** Previous/next rhythm: inside the playlist when playing from one, else the library order. */
@@ -300,7 +341,44 @@ export function stepRhythm(dir: 1 | -1): void {
   selectRhythm(next.id);
 }
 
-player.subscribe(applyRate);
+export interface RhythmClock {
+  /** Loop position heard at audio time t. */
+  posAt(t: number): number;
+  rateAt(t: number): number;
+  nextChange(t: number): number | undefined;
+  loopLen: number;
+  /** Exact quarter-note tempo of the loop at rate 1. */
+  bpm: number;
+  /** Bar start in the loop (s). */
+  phase: number;
+  /** Sample-exact (Signalsmith) or estimated from <audio>. */
+  exact: boolean;
+}
+
+/** The playing rhythm's clock, for a metronome locked to it. */
+export function rhythmClock(): RhythmClock | undefined {
+  const r = currentRhythm();
+  const e = active;
+  const bpm = exactBpm(r);
+  if (!player.get().playing || !e || !r || !bpm || !e.loopLen()) return undefined;
+  return {
+    posAt: (t) => e.posAt(t) ?? 0,
+    rateAt: (t) => e.rateAt(t),
+    nextChange: (t) => e.nextChange(t),
+    loopLen: e.loopLen(),
+    bpm,
+    phase: r.phase ?? 0,
+    exact: e.kind === 'stretch',
+  };
+}
+
+player.subscribe(() => {
+  if (!active || !player.get().playing) return;
+  const rate = rateNow();
+  if (Math.abs(rate - appliedRate) < 1e-6) return;
+  appliedRate = rate;
+  active.setRate(rate);
+});
 
 if (typeof navigator !== 'undefined' && navigator.mediaSession) {
   const ms = navigator.mediaSession;

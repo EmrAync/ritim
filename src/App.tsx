@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { player } from './audio/player';
+import { player, preload } from './audio/player';
 import { catalog, loadCatalog, rhythmById } from './data/rhythms';
 import { refreshOffline } from './data/offline';
 import { useStore } from './lib/store';
@@ -21,6 +21,7 @@ export function App() {
       const all = catalog.get().rhythms;
       // First visit (or the saved rhythm was removed): start on the first rhythm.
       if (all.length && !rhythmById(player.get().rhythmId)) player.set((s) => ({ ...s, rhythmId: all[0].id, bpm: all[0].bpm ?? 100, queue: undefined }));
+      preload();
       return refreshOffline(all);
     });
     checkLinkImport();

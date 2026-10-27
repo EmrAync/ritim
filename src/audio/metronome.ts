@@ -5,7 +5,9 @@
 import { createStore, persist } from '../lib/store';
 import { masterOut, unlockAudio } from './context';
 import { playVoice, type Voice } from './drums';
-import { player } from './player';
+import { readLocal, writeLocal } from '../lib/store';
+import { player, rhythmClock, type RhythmClock } from './player';
+import { mod, nextGridPoint } from './timeline';
 import type { Level, MetroSettings, PlanEvent, SoundId, Stroke } from './usuls';
 import { DEFAULT_METRO, planBar, sanitizeMetro } from './usuls';
 
@@ -19,6 +21,13 @@ export const updateMetro = (patch: Partial<MetroSettings> | ((s: MetroSettings) 
   metroSettings.set((s) => (typeof patch === 'function' ? patch(s) : { ...s, ...patch }));
 
 export const metroRunning = createStore(false);
+
+// Bar start per rhythm set with "Bir'e dokun" (overrides the analysed one).
+const PHASE_KEY = 'ritim.phase.v1';
+const phases: Record<string, number> = (() => {
+  const raw = readLocal(PHASE_KEY);
+  return raw && typeof raw === 'object' ? (raw as Record<string, number>) : {};
+})();
 
 /** Pulses per minute the metronome plays at now. */
 export function metroBpm(): number {
@@ -87,6 +96,8 @@ class Metronome {
   private idx = 0;
   private nextTime = 0;
   private visuals: Visual[] = [];
+  private locked = false;
+  private lockedUntil = 0;
 
   constructor() {
     metroSettings.subscribe(() => {
@@ -123,14 +134,34 @@ class Metronome {
     else this.start();
   }
 
-  /** Starts a new bar right now ("Bir'e dokun"), dropping clicks already scheduled. */
+  /**
+   * "Bir'e dokun": the bar starts now. Locked to a rhythm, the spot is saved
+   * for that rhythm so its clicks stay on its downbeat from then on.
+   */
   tapOne(): void {
     if (!metroRunning.get()) {
       this.start();
       return;
     }
+    const clock = this.lockClock();
+    if (clock && this.ctx) {
+      const id = player.get().rhythmId;
+      if (id) {
+        phases[id] = Math.round(clock.posAt(this.ctx.currentTime) * 1000) / 1000;
+        writeLocal(PHASE_KEY, phases);
+      }
+      this.resetSeg();
+      this.lockedUntil = this.ctx.currentTime;
+      this.schedule();
+      return;
+    }
     this.restartBar(0.005);
     this.schedule();
+  }
+
+  /** Clock of the rhythm the metronome follows, when it is playing. */
+  private lockClock(): RhythmClock | undefined {
+    return metroSettings.get().follow ? rhythmClock() : undefined;
   }
 
   /** The pulse sounding now (for the beat lights). */
@@ -144,12 +175,16 @@ class Metronome {
     return cur;
   }
 
-  private restartBar(delay: number): void {
-    const ctx = this.ctx!;
+  private resetSeg(): void {
     this.seg?.disconnect();
-    this.seg = ctx.createGain();
+    this.seg = this.ctx!.createGain();
     this.seg.connect(this.out!);
     this.visuals = [];
+  }
+
+  private restartBar(delay: number): void {
+    const ctx = this.ctx!;
+    this.resetSeg();
     this.newBar();
     this.nextTime = ctx.currentTime + delay;
   }
@@ -161,26 +196,78 @@ class Metronome {
     this.idx = 0;
   }
 
+  private play(ev: PlanEvent, t: number): void {
+    const s = metroSettings.get();
+    if (!ev.silent) {
+      const grouped = s.grouping.some((g) => g > 1);
+      const hits = ev.stroke ? strokeVoices(s.sound, ev.stroke, ev.at === 0) : clickVoices(s.sound, ev, s.beats, grouped);
+      for (const [voice, vel] of hits) playVoice(this.ctx!, this.seg!, voice, t, vel);
+    }
+    if (ev.level !== 'sub') this.visuals.push({ time: t, beat: ev.beat, level: ev.level });
+  }
+
+  /** Clicks on the rhythm's own beat grid, at the positions the recording is heard. */
+  private scheduleLocked(c: RhythmClock): void {
+    const ctx = this.ctx!;
+    const s = metroSettings.get();
+    const plan = planBar(s);
+    const sub = plan.some((e) => e.stroke) ? 1 : s.subdivision;
+    const byPos = new Map(plan.map((e) => [`${e.beat}:${Math.round((e.at - e.beat) * sub)}`, e]));
+    const step = 60 / (c.bpm * s.factor) / sub;
+    const id = player.get().rhythmId;
+    const phase = (id ? phases[id] : undefined) ?? c.phase;
+    const horizon = ctx.currentTime + LOOKAHEAD_S;
+    let t = Math.max(this.lockedUntil, ctx.currentTime);
+    for (let guard = 0; guard < 64; guard++) {
+      const hit = nextGridPoint(c.posAt(t), c.loopLen, phase, step);
+      const te = t + hit.dist / Math.max(0.1, c.rateAt(t));
+      // A tempo change before the hit: continue from there with the new tempo.
+      const change = c.nextChange(t);
+      if (change !== undefined && change < te && change <= horizon) {
+        t = change;
+        continue;
+      }
+      if (te > horizon) break;
+      const pulse = Math.floor(hit.k / sub);
+      const ev = byPos.get(`${mod(pulse, s.beats)}:${mod(hit.k, sub)}`);
+      if (ev) this.play(ev, te);
+      t = te + 1e-4;
+      this.lockedUntil = t;
+    }
+  }
+
   private schedule(): void {
     const ctx = this.ctx;
     if (!ctx || !this.seg) return;
-    const s = metroSettings.get();
-    const grouped = s.grouping.some((g) => g > 1);
+    const clock = this.lockClock();
+    if (clock) {
+      if (!this.locked) {
+        this.locked = true;
+        this.resetSeg();
+        this.lockedUntil = ctx.currentTime;
+      }
+      this.scheduleLocked(clock);
+      this.trimVisuals();
+      return;
+    }
+    if (this.locked) {
+      this.locked = false;
+      this.restartBar(0.05);
+    }
     while (this.nextTime < ctx.currentTime + LOOKAHEAD_S) {
       const ev = this.plan[this.idx];
-      const t = Math.max(this.nextTime, ctx.currentTime);
-      if (!ev.silent) {
-        const hits = ev.stroke ? strokeVoices(s.sound, ev.stroke, ev.at === 0) : clickVoices(s.sound, ev, this.beats, grouped);
-        for (const [voice, vel] of hits) playVoice(ctx, this.seg, voice, t, vel);
-      }
-      if (ev.level !== 'sub') this.visuals.push({ time: t, beat: ev.beat, level: ev.level });
+      this.play(ev, Math.max(this.nextTime, ctx.currentTime));
       const nextAt = this.idx + 1 < this.plan.length ? this.plan[this.idx + 1].at : this.beats;
       this.nextTime += ((nextAt - ev.at) * 60) / metroBpm();
       this.idx++;
       // Settings changes (meter, accents, usul) take effect at the bar line.
       if (this.idx >= this.plan.length) this.newBar();
     }
-    const old = ctx.currentTime - 1;
+    this.trimVisuals();
+  }
+
+  private trimVisuals(): void {
+    const old = this.ctx!.currentTime - 1;
     while (this.visuals.length > 1 && this.visuals[0].time < old) this.visuals.shift();
   }
 }

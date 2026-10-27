@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { player, selectRhythm } from '../audio/player';
 import { offline } from '../data/offline';
-import { catalog, formatTime, searchRhythms, type Rhythm } from '../data/rhythms';
+import { catalog, formatTime, searchRhythms, shownBpm, type Rhythm } from '../data/rhythms';
 import { useStore } from '../lib/store';
 import { Header } from './common';
 import { Icon } from './icons';
@@ -54,7 +54,7 @@ function RhythmList({ onPick, onAdd, selected }: { onPick(r: Rhythm): void; onAd
                   <button className="row-main" onClick={() => onPick(r)}>
                     <span className="row-title">{r.title}</span>
                     <span className="row-sub">
-                      {[r.meter, r.bpm ? `${r.bpmEstimated ? '≈' : ''}${r.bpm}${r.bpmTo ? `→${r.bpmTo}` : ''} BPM` : undefined, formatTime(r.duration)]
+                      {[r.meter, r.bpm ? `${r.bpmEstimated ? '≈' : ''}${shownBpm(r)}${r.bpmTo ? `→${r.bpmTo}` : ''} BPM` : undefined, formatTime(r.duration)]
                         .filter(Boolean)
                         .join(' · ')}
                       {off.has(r.id) && <Icon name="check" size={14} className="saved" />}

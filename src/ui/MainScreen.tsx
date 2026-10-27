@@ -3,10 +3,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { metroRunning } from '../audio/metronome';
-import { currentRhythm, player, progress, setBpm, setTimer, stepRhythm, toggleRhythm, TIMER_CHOICES } from '../audio/player';
+import { currentRhythm, player, progress, setBpm, setOrder, setTimer, stepRhythm, toggleRhythm, TIMER_CHOICES } from '../audio/player';
 import { TapTempo, tempoRange } from '../audio/tempo';
-import { listById } from '../data/playlists';
-import { catalog, formatTime, rhythmSubtitle } from '../data/rhythms';
+import { listById, playlists } from '../data/playlists';
+import { catalog, formatTime, rhythmSubtitle, shownBpm } from '../data/rhythms';
 import { useStore } from '../lib/store';
 import { Sheet } from './common';
 import { Icon } from './icons';
@@ -66,21 +66,70 @@ function TimerSheet({ onClose }: { onClose(): void }) {
   );
 }
 
+function OrderSheet({ onClose }: { onClose(): void }) {
+  const lists = useStore(playlists);
+  const { queue } = useStore(player);
+  const cat = useStore(catalog);
+  const pick = (id: string | undefined) => {
+    setOrder(id);
+    onClose();
+  };
+  return (
+    <Sheet title="Çalma sırası" onClose={onClose}>
+      <p className="hint">◀ ▶ tuşları seçtiğiniz sırada ilerler. Bir liste seçince ilk şarkıdan başlar.</p>
+      <nav className="menu">
+        <button className={!queue ? 'menu-item on' : 'menu-item'} onClick={() => pick(undefined)}>
+          <Icon name="music" />
+          <span>
+            <b>Tüm ritimler</b>
+            <small>{cat.rhythms.length} ritim, kütüphane sırasıyla</small>
+          </span>
+          {!queue && <Icon name="check" className="saved" />}
+        </button>
+        {lists.map((l) => (
+          <button key={l.id} className={queue?.listId === l.id ? 'menu-item on' : 'menu-item'} disabled={!l.entries.length} onClick={() => pick(l.id)}>
+            <Icon name="list" />
+            <span>
+              <b>{l.name}</b>
+              <small>{l.entries.length ? `${l.entries.length} şarkı · baştan başlat` : 'Boş liste'}</small>
+            </span>
+            {queue?.listId === l.id && <Icon name="check" className="saved" />}
+          </button>
+        ))}
+        <button
+          className="menu-item"
+          onClick={() => {
+            onClose();
+            go({ name: 'lists' });
+          }}
+        >
+          <Icon name="plus" />
+          <span>
+            <b>Liste oluştur / düzenle</b>
+            <small>Koro, sahne, prova listeleri…</small>
+          </span>
+        </button>
+      </nav>
+    </Sheet>
+  );
+}
+
 export function MainScreen() {
   const st = useStore(player);
   const cat = useStore(catalog);
   const metroOn = useStore(metroRunning);
   const [menu, setMenu] = useState(false);
   const [timerSheet, setTimerSheet] = useState(false);
+  const [orderSheet, setOrderSheet] = useState(false);
   const tap = useRef(new TapTempo());
   const [tapFlash, setTapFlash] = useState(false);
   const now = useNow(!!st.endsAt);
   const r = cat.loaded ? currentRhythm() : undefined;
-  const [lo, hi] = tempoRange(r?.bpm);
+  const rec = shownBpm(r);
+  const [lo, hi] = tempoRange(rec);
   const list = st.queue ? listById(st.queue.listId) : undefined;
   const entry = list?.entries[st.queue!.index];
   const fromList = entry && entry.rhythmId === r?.id ? entry : undefined;
-  const pct = r?.bpm ? Math.round((st.bpm / r.bpm) * 100) : 100;
 
   const onTap = () => {
     const bpm = tap.current.tap(performance.now());
@@ -112,6 +161,14 @@ export function MainScreen() {
         </div>
       </header>
 
+      <button className="order-chip" onClick={() => setOrderSheet(true)}>
+        <Icon name={list ? 'list' : 'music'} size={18} />
+        <span>
+          Sıra: <b>{list ? list.name : 'Tüm ritimler'}</b>
+        </span>
+        <Icon name="down" size={18} />
+      </button>
+
       <section className="now">
         <button className="step-btn" onClick={() => stepRhythm(-1)} aria-label="Önceki ritim">
           <Icon name="prev" size={28} />
@@ -139,7 +196,7 @@ export function MainScreen() {
       </section>
 
       <section className="tempo">
-        <Knob value={st.bpm} min={lo} max={hi} onChange={setBpm} marker={r?.bpm} caption={r?.bpm ? `BPM · %${pct}` : 'BPM'} />
+        <Knob value={st.bpm} min={lo} max={hi} onChange={setBpm} marker={rec} caption="BPM" />
         <div className="tempo-row">
           <button className="round-btn" onClick={() => setBpm(st.bpm - 1)} aria-label="Tempo azalt">
             <Icon name="minus" size={28} />
@@ -152,11 +209,9 @@ export function MainScreen() {
           </button>
         </div>
         <div className="rec-line">
-          {r?.bpm ? (
-            <button className="link-btn" onClick={() => setBpm(r.bpm!)}>
-              Kayıt temposu {r.bpmEstimated ? '≈' : ''}
-              {r.bpm}
-              {r.bpmTo ? `→${r.bpmTo}` : ''} · sıfırla
+          {rec ? (
+            <button className="link-btn" onClick={() => setBpm(rec)}>
+              {st.bpm === rec ? 'Kayıt temposunda' : `Kayıt temposu ${r?.bpmEstimated ? '≈' : ''}${rec}${r?.bpmTo ? `→${r.bpmTo}` : ''} · geri dön`}
             </button>
           ) : (
             <span>&nbsp;</span>
@@ -170,7 +225,7 @@ export function MainScreen() {
 
       <button className={st.playing ? 'start-btn on' : 'start-btn'} onClick={toggleRhythm} disabled={!r}>
         {busy ? (
-          <span>İndiriliyor {Math.round(st.loadPct * 100)}%</span>
+          <span>{st.loadPct < 1 ? `İndiriliyor %${Math.round(st.loadPct * 100)}` : 'Hazırlanıyor…'}</span>
         ) : st.playing ? (
           <>
             <Icon name="stop" size={30} /> STOP
@@ -196,6 +251,7 @@ export function MainScreen() {
 
       {timerSheet && <TimerSheet onClose={() => setTimerSheet(false)} />}
       {menu && <Menu onClose={() => setMenu(false)} />}
+      {orderSheet && <OrderSheet onClose={() => setOrderSheet(false)} />}
     </div>
   );
 }
