@@ -50,6 +50,10 @@ describe('pitch', () => {
     // Bağlama düzeni at La karar (ses seviyesi Re): Re–Sol–La.
     const baglama = shifted(TUNINGS.find((t) => t.id === 'baglama-baglama')!, 5);
     expect(baglama.strings.map((m) => noteName(m, 'solfej'))).toEqual(['Re', 'Sol', 'La']);
+    // Kısa sap Si düzeni: alt Mi, orta La, üst Si; La düzeni a tone lower.
+    const kisa = (id: string) => TUNINGS.find((x) => x.id === id)!.strings.map((m) => noteName(m, 'harf'));
+    expect(kisa('kisa-si')).toEqual(['E', 'A', 'B']);
+    expect(kisa('kisa-la')).toEqual(['D', 'G', 'A']);
     expect(median([3, 1, 2, 10, 2])).toBe(2);
   });
 });

@@ -100,7 +100,7 @@ export function TunerScreen() {
             </button>
           ))}
         </div>
-        {(t.instrument === 'baglama' || t.instrument === 'gitar') && (
+        {(t.instrument === 'baglama' || t.instrument === 'gitar' || t.instrument === 'kisasap') && (
           <div className="chips-scroll">
             {TUNINGS.filter((x) => x.instrument === t.instrument).map((x) => (
               <button key={x.id} className={s.tuningId === x.id ? 'chip on' : 'chip'} onClick={() => setS({ tuningId: x.id })}>
