@@ -1,5 +1,6 @@
 // ⋮ menu: every screen besides the main one, plus app install.
 
+import { engineMode, setEngineMode } from '../audio/player';
 import { createStore, useStore } from '../lib/store';
 import { Sheet } from './common';
 import { Icon, type IconName } from './icons';
@@ -31,6 +32,7 @@ const ITEMS: { icon: IconName; label: string; sub: string; to: Screen }[] = [
 
 export function Menu({ onClose }: { onClose(): void }) {
   const prompt = useStore(installPrompt);
+  const mode = useStore(engineMode);
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   return (
     <Sheet title="Menü" onClose={onClose}>
@@ -51,6 +53,15 @@ export function Menu({ onClose }: { onClose(): void }) {
             </span>
           </button>
         ))}
+        <button className="menu-item" onClick={() => setEngineMode(mode === 'hafif' ? 'kaliteli' : 'hafif')}>
+          <span className={mode === 'hafif' ? 'toggle on' : 'toggle'}>
+            <span className="toggle-knob" />
+          </span>
+          <span>
+            <b>Hafif ses motoru</b>
+            <small>{mode === 'hafif' ? 'Açık: eski telefonlar için; tempo değişimi daha az akıcı' : 'Ses takılırsa açın (eski / yavaş telefonlar)'}</small>
+          </span>
+        </button>
         {!isStandalone() && (prompt || ios) && (
           <button
             className="menu-item"

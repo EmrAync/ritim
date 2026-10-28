@@ -77,6 +77,20 @@ let gain: GainNode | undefined;
 let element: ElementEngine | undefined;
 let stretch: Promise<StretchEngine | undefined> | undefined;
 let stretchBroken = !stretchSupported();
+
+/** "kaliteli": Signalsmith (smooth tempo, metronome lock); "hafif": <audio> for very weak phones. */
+export type EngineMode = 'kaliteli' | 'hafif';
+export const engineMode = createStore<EngineMode>('kaliteli');
+persist(engineMode, 'ritim.engine.v1', (raw) => (raw === 'hafif' ? 'hafif' : 'kaliteli'));
+const useStretch = (): boolean => !stretchBroken && engineMode.get() === 'kaliteli';
+
+/** Switches the engine; a playing rhythm restarts with it (call from a tap). */
+export function setEngineMode(m: EngineMode): void {
+  if (m === engineMode.get()) return;
+  engineMode.set(m);
+  pre = undefined;
+  if (player.get().playing) playRhythm();
+}
 let active: RhythmEngine | undefined;
 let token = 0;
 let ticker: ReturnType<typeof setInterval> | undefined;
@@ -118,7 +132,7 @@ let pre: { id: string; buf: Promise<AudioBuffer | undefined> } | undefined;
 /** Starts downloading and decoding a rhythm in the background. */
 export function preload(r: Rhythm | undefined = currentRhythm()): void {
   if (!r) return;
-  if (r.whole || stretchBroken) {
+  if (r.whole || !useStretch()) {
     void getRhythmBlob(r).catch(() => undefined);
     return;
   }
@@ -133,7 +147,7 @@ export function preload(r: Rhythm | undefined = currentRhythm()): void {
 
 async function engineFor(r: Rhythm): Promise<RhythmEngine> {
   // Very long recordings would need too much memory decoded: stream them.
-  if (!r.whole) {
+  if (!r.whole && useStretch()) {
     const s = await stretchEngine();
     if (s) return s;
   }

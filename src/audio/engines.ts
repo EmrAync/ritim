@@ -73,6 +73,8 @@ export class StretchEngine implements RhythmEngine {
     const e = new StretchEngine(ctx);
     e.node = await withTimeout(mod.default(ctx, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] }), 15000, 'Tempo motoru başlatılamadı');
     e.node.connect(dest);
+    // Lighter than the default preset and spread evenly over time, so slower phones do not stutter.
+    await e.node.configure({ blockMs: 100, intervalMs: 40, splitComputation: true });
     e.lat = Math.min(0.4, Math.max(0.02, (await e.node.latency()) || 0.15));
     return e;
   }

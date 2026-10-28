@@ -8,7 +8,8 @@ let master: GainNode | undefined;
 export function audioContext(): AudioContext {
   if (!ctx) {
     const C = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    ctx = new C({ latencyHint: 'interactive' });
+    // A larger output buffer: weaker phones keep up with the tempo engine without dropouts.
+    ctx = new C({ latencyHint: 'playback' });
     master = ctx.createGain();
     master.connect(ctx.destination);
   }
