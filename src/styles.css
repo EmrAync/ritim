@@ -1432,6 +1432,40 @@ button:disabled {
   min-height: 18px;
 }
 
+.tuner-listen {
+  margin-top: 6px;
+  min-height: 56px;
+  min-width: 200px;
+  border-radius: 18px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(245, 165, 36, 0.25);
+}
+
+.tuner-listen:active {
+  transform: scale(0.98);
+}
+
+.tuner-stop {
+  margin-top: 8px;
+  min-height: 36px;
+  padding: 4px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .tuner-strings {
   display: flex;
   gap: 6px;

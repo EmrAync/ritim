@@ -127,16 +127,29 @@ export function TunerScreen() {
             {fresh && <sub>{octaveOf(r!.midi)}</sub>}
           </div>
           <Gauge cents={cents} active={fresh} />
-          <div className="tuner-status">
-            {fresh && !ok && <Icon name={cents < 0 ? 'up' : 'down'} size={20} />}
-            {ok && <Icon name="check" size={20} />}
-            <span>{status}</span>
-          </div>
-          <div className="tuner-meta">
-            <span>{fresh ? `${cents > 0 ? '+' : ''}${cents.toFixed(1)} sent` : ' '}</span>
-            <span>{fresh ? `${r!.freq.toFixed(1)} Hz` : ' '}</span>
-            <span>{fresh ? `${cents >= 0 ? '+' : ''}${(cents / KOMA_CENTS).toFixed(1)} koma` : ' '}</span>
-          </div>
+          {st.listening ? (
+            <>
+              <div className="tuner-status">
+                {fresh && !ok && <Icon name={cents < 0 ? 'up' : 'down'} size={20} />}
+                {ok && <Icon name="check" size={20} />}
+                <span>{status}</span>
+              </div>
+              <div className="tuner-meta">
+                <span>{fresh ? `${cents > 0 ? '+' : ''}${cents.toFixed(1)} sent` : ' '}</span>
+                <span>{fresh ? `${r!.freq.toFixed(1)} Hz` : ' '}</span>
+                <span>{fresh ? `${cents >= 0 ? '+' : ''}${(cents / KOMA_CENTS).toFixed(1)} koma` : ' '}</span>
+              </div>
+              <button className="tuner-stop" onClick={stopTuner}>
+                <Icon name="stop" size={16} /> Durdur
+              </button>
+            </>
+          ) : (
+            // Start right where the reading appears, visible as soon as the screen opens.
+            <button className="tuner-listen" onClick={() => void startTuner()} disabled={st.starting}>
+              <Icon name="tuner" size={26} />
+              {st.starting ? 'Mikrofon açılıyor…' : 'DİNLE'}
+            </button>
+          )}
         </div>
 
         {t.strings.length > 0 && (
@@ -196,11 +209,6 @@ export function TunerScreen() {
           </div>
         )}
         {st.error && <div className="error">{st.error}</div>}
-
-        <button className={st.listening ? 'start-btn on' : 'start-btn'} onClick={() => (st.listening ? stopTuner() : void startTuner())} disabled={st.starting}>
-          <Icon name={st.listening ? 'stop' : 'tuner'} size={28} />
-          {st.starting ? 'Mikrofon açılıyor…' : st.listening ? 'DURDUR' : 'DİNLE'}
-        </button>
 
         <section className="card">
           <h3>Ayarlar</h3>
