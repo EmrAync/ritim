@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { metronome, metroRunning } from '../audio/metronome';
-import { INSTRUMENTS, KOMA_CENTS, TUNINGS, noteName, octaveOf } from '../audio/pitch';
+import { INSTRUMENTS, KOMA_CENTS, TUNINGS, flatSharpNames, noteName, octaveOf } from '../audio/pitch';
 import { player, stopRhythm } from '../audio/player';
 import { SHIFTS, currentTuning, playReference, startTuner, stopTuner, tuner, tunerSettings } from '../audio/tuner';
 import { useStore } from '../lib/store';
@@ -27,7 +27,8 @@ function arc(r: number, from: number, to: number): string {
 /** ±50 cents over ±60°. */
 const deg = (cents: number) => Math.max(-50, Math.min(50, cents)) * 1.2;
 
-function Gauge({ cents, active }: { cents: number; active: boolean }) {
+/** `ends`: names for -50 / +50 (the heard note's flat and sharp). */
+function Gauge({ cents, active, ends }: { cents: number; active: boolean; ends?: [string, string] }) {
   const ok = active && Math.abs(cents) <= IN_TUNE;
   const ticks = [];
   for (let c = -50; c <= 50; c += 5) {
@@ -41,10 +42,11 @@ function Gauge({ cents, active }: { cents: number; active: boolean }) {
       <path d={arc(124, deg(-IN_TUNE), deg(IN_TUNE))} className="tg-zone" />
       {ticks}
       {[-50, -25, 0, 25, 50].map((c) => {
-        const [x, y] = polar(86, deg(c));
+        const named = ends && Math.abs(c) === 50;
+        const [x, y] = polar(named ? 84 : 86, deg(c));
         return (
-          <text key={c} x={x} y={y + 4} className="tg-label">
-            {c > 0 ? `+${c}` : c}
+          <text key={c} x={x} y={y + 4} className={named ? 'tg-label tg-end' : 'tg-label'}>
+            {named ? ends![c < 0 ? 0 : 1] : c > 0 ? `+${c}` : c}
           </text>
         );
       })}
@@ -141,7 +143,7 @@ export function TunerScreen() {
             {fresh ? noteName(r!.midi, s.naming) : '—'}
             {fresh && <sub>{octaveOf(r!.midi)}</sub>}
           </div>
-          <Gauge cents={cents} active={fresh} />
+          <Gauge cents={cents} active={fresh} ends={fresh ? flatSharpNames(r!.midi, s.naming) : undefined} />
           {st.listening ? (
             <>
               <div className="tuner-status">

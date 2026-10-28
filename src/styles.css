@@ -1384,6 +1384,12 @@ button:disabled {
   text-anchor: middle;
 }
 
+.tg-label.tg-end {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .tg-needle {
   transform-origin: 150px 150px;
   transform-box: view-box;

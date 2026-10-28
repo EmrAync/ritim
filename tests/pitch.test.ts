@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TUNINGS, detectPitch, detectPitchFine, matchString, median, noteName, octaveOf, readNote, shifted } from '../src/audio/pitch';
+import { TUNINGS, detectPitch, detectPitchFine, flatSharpNames, matchString, median, noteName, octaveOf, readNote, shifted } from '../src/audio/pitch';
 
 /** A plucked-string-like tone: fundamental plus decaying harmonics. */
 function tone(freq: number, sr: number, n: number, harmonics = [1, 0.6, 0.35, 0.2]): Float32Array {
@@ -55,5 +55,13 @@ describe('pitch', () => {
     expect(kisa('kisa-si')).toEqual(['E', 'A', 'B']);
     expect(kisa('kisa-la')).toEqual(['D', 'G', 'A']);
     expect(median([3, 1, 2, 10, 2])).toBe(2);
+  });
+
+  it('names the ends of the needle after the heard note', () => {
+    expect(flatSharpNames(67, 'solfej')).toEqual(['Sol♭', 'Sol♯']);
+    expect(flatSharpNames(64, 'solfej')).toEqual(['Mi♭', 'Fa']);
+    expect(flatSharpNames(60, 'solfej')).toEqual(['Si', 'Do♯']);
+    expect(flatSharpNames(66, 'solfej')).toEqual(['Fa', 'Sol']);
+    expect(flatSharpNames(71, 'harf')).toEqual(['B♭', 'C']);
   });
 });

@@ -110,6 +110,20 @@ export const noteName = (midi: number, naming: Naming): string => (naming === 's
 
 export const octaveOf = (midi: number): number => Math.floor(midi / 12) - 1;
 
+/**
+ * Names for the two ends of the needle (half way to the neighbour notes):
+ * the note's flat and sharp (Sol♭ / Sol♯); where there is no such note the
+ * neighbour natural (Mi → Fa, Do → Si); for a sharp note its naturals (Fa♯ → Fa / Sol).
+ */
+export function flatSharpNames(midi: number, naming: Naming): [string, string] {
+  const pc = ((midi % 12) + 12) % 12;
+  const base = noteName(midi, naming);
+  if (base.includes('#')) return [noteName(midi - 1, naming), noteName(midi + 1, naming)];
+  const lower = pc === 0 || pc === 5 ? noteName(midi - 1, naming) : `${base}♭`;
+  const upper = pc === 4 || pc === 11 ? noteName(midi + 1, naming) : `${base}♯`;
+  return [lower, upper];
+}
+
 export interface NoteReading {
   midi: number;
   /** -50 … +50 */
