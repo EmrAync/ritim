@@ -161,6 +161,8 @@ export interface Tuning {
   labels?: string[];
   /** Where the tuning is usual. */
   note?: string;
+  /** Solfège names of the strings as musicians write them (Si♭, not La#). */
+  names?: string[];
 }
 
 // MIDI numbers: E2 40, A2 45, D3 50, G3 55, B3 59, E4 64; La4 = 69.
@@ -205,6 +207,7 @@ export const TUNINGS: Tuning[] = [
     strings: [top - 7, top - 2, top],
     anyOctave: true,
     labels: BAGLAMA,
+    names,
     note: `Kısa sap · alt ${names[0]}, orta ${names[1]}, üst ${names[2]}.`,
   })),
   { id: 'baglama-bozuk', instrument: 'baglama', name: 'Bozuk (Kara) düzen', strings: [LA, RE, SOL], anyOctave: true, labels: BAGLAMA, note: 'Uzun sapta en yaygın düzen.' },

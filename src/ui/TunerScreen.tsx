@@ -84,7 +84,8 @@ export function TunerScreen() {
   const ok = fresh && Math.abs(cents) <= IN_TUNE;
   const status = !fresh ? (st.listening ? 'Bir tel çalın' : 'Dinlemek için başlatın') : ok ? 'Tamam' : cents < 0 ? 'Pes — sıkın' : 'Tiz — gevşetin';
   const setS = (p: Partial<typeof s>) => tunerSettings.set((x) => ({ ...x, ...p }));
-  const label = (midi: number) => `${noteName(midi, s.naming)}${t.anyOctave ? '' : octaveOf(midi)}`;
+  const label = (midi: number, i?: number) =>
+    i !== undefined && s.naming === 'solfej' && t.names ? t.names[i] : `${noteName(midi, s.naming)}${t.anyOctave ? '' : octaveOf(midi)}`;
 
   return (
     <div className="screen">
@@ -172,8 +173,8 @@ export function TunerScreen() {
         {t.strings.length > 0 && (
           <div className="tuner-strings">
             {t.strings.map((m, i) => (
-              <button key={i} className={fresh && r!.string === i ? (ok ? 'tstring ok' : 'tstring on') : 'tstring'} onClick={() => playReference(m)} aria-label={`${label(m)} referans sesi`}>
-                <b>{label(m)}</b>
+              <button key={i} className={fresh && r!.string === i ? (ok ? 'tstring ok' : 'tstring on') : 'tstring'} onClick={() => playReference(m)} aria-label={`${label(m, i)} referans sesi`}>
+                <b>{label(m, i)}</b>
                 <small>{t.labels?.[i] ?? `${i + 1}. tel`}</small>
               </button>
             ))}
