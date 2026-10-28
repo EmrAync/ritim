@@ -180,16 +180,35 @@ const SI = 71;
 const DO = 60;
 const BAGLAMA = ['Alt', 'Orta', 'Üst'];
 
+/** Kısa sap düzenleri: id, üst tel (MIDI), names of alt / orta / üst. */
+const KISA_SAP: [string, number, [string, string, string]][] = [
+  ['do', DO + 12, ['Fa', 'Si♭', 'Do']],
+  ['re', RE, ['Sol', 'Do', 'Re']],
+  ['mi', MI, ['La', 'Re', 'Mi']],
+  ['fa', FA, ['Si♭', 'Mi♭', 'Fa']],
+  ['sol', SOL, ['Do', 'Fa', 'Sol']],
+  ['la', SOL_LA, ['Re', 'Sol', 'La']],
+  ['si', SI, ['Mi', 'La', 'Si']],
+];
+
 export const TUNINGS: Tuning[] = [
   { id: 'kromatik', instrument: 'kromatik', name: 'Kromatik (her nota)', strings: [] },
   { id: 'gitar', instrument: 'gitar', name: 'Standart (Mi La Re Sol Si Mi)', strings: [40, 45, 50, 55, 59, 64] },
   { id: 'gitar-dropd', instrument: 'gitar', name: 'Drop D', strings: [38, 45, 50, 55, 59, 64] },
   { id: 'gitar-yarim', instrument: 'gitar', name: 'Yarım ses pes', strings: [39, 44, 49, 54, 58, 63] },
-  // Kısa sap: bağlama düzeni at the pitch levels kısa sap players tune to.
-  { id: 'kisa-si', instrument: 'kisasap', name: 'Si düzeni (Mi La Si)', strings: [MI, SOL_LA, SI], anyOctave: true, labels: BAGLAMA, note: 'Kısa sap · alt Mi, orta La, üst Si.' },
-  { id: 'kisa-la', instrument: 'kisasap', name: 'La düzeni (Re Sol La)', strings: [RE, SOL, SOL_LA], anyOctave: true, labels: BAGLAMA, note: 'Kısa sap · Si düzeninin bir ton pesi: alt Re, orta Sol, üst La.' },
+  // Kısa sap: bağlama düzeni at every pitch level. "X düzeni": üst X,
+  // orta a tone lower, alt a fifth lower (Si: Mi–La–Si, La: Re–Sol–La).
+  ...KISA_SAP.map(([key, top, names]) => ({
+    id: `kisa-${key}`,
+    instrument: 'kisasap' as const,
+    name: `${names[2]} düzeni (${names.join(' ')})`,
+    strings: [top - 7, top - 2, top],
+    anyOctave: true,
+    labels: BAGLAMA,
+    note: `Kısa sap · alt ${names[0]}, orta ${names[1]}, üst ${names[2]}.`,
+  })),
   { id: 'baglama-bozuk', instrument: 'baglama', name: 'Bozuk (Kara) düzen', strings: [LA, RE, SOL], anyOctave: true, labels: BAGLAMA, note: 'Uzun sapta en yaygın düzen.' },
-  { id: 'baglama-baglama', instrument: 'baglama', name: 'Bağlama düzeni', strings: [LA, RE, MI], anyOctave: true, labels: BAGLAMA, note: 'Yazımda La–Re–Mi. Kısa sap için “Kısa sap” sekmesindeki Si ve La düzenlerine bakın.' },
+  { id: 'baglama-baglama', instrument: 'baglama', name: 'Bağlama düzeni', strings: [LA, RE, MI], anyOctave: true, labels: BAGLAMA, note: 'Yazımda La–Re–Mi. Kısa sap için “Kısa sap” sekmesindeki Do–Si düzenlerine bakın.' },
   { id: 'baglama-misket', instrument: 'baglama', name: 'Misket düzeni', strings: [LA, RE, FAD], anyOctave: true, labels: BAGLAMA },
   { id: 'baglama-fa-mustezat', instrument: 'baglama', name: 'Fa müstezat (Acem) düzeni', strings: [LA, RE, FA], anyOctave: true, labels: BAGLAMA },
   { id: 'baglama-abdal', instrument: 'baglama', name: 'Abdal (Bozlak) düzeni', strings: [LA, LA, SOL], anyOctave: true, labels: BAGLAMA, note: 'Açıktan çalma; alt ve orta teller aynı ses.' },

@@ -54,6 +54,10 @@ describe('pitch', () => {
     const kisa = (id: string) => TUNINGS.find((x) => x.id === id)!.strings.map((m) => noteName(m, 'harf'));
     expect(kisa('kisa-si')).toEqual(['E', 'A', 'B']);
     expect(kisa('kisa-la')).toEqual(['D', 'G', 'A']);
+    expect(kisa('kisa-do')).toEqual(['F', 'A#', 'C']);
+    expect(kisa('kisa-re')).toEqual(['G', 'C', 'D']);
+    expect(kisa('kisa-mi')).toEqual(['A', 'D', 'E']);
+    expect(kisa('kisa-sol')).toEqual(['C', 'F', 'G']);
     expect(median([3, 1, 2, 10, 2])).toBe(2);
   });
 
