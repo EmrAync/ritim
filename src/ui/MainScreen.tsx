@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { metroRunning } from '../audio/metronome';
-import { currentRhythm, player, progress, setBpm, setOrder, setTimer, stepRhythm, toggleRhythm, TIMER_CHOICES } from '../audio/player';
+import { currentRhythm, engineMode, player, progress, setBpm, setOrder, setTimer, stepRhythm, toggleRhythm, TIMER_CHOICES } from '../audio/player';
 import { TapTempo, tempoRange } from '../audio/tempo';
 import { listById, playlists } from '../data/playlists';
 import { catalog, formatTime, rhythmSubtitle, shownBpm } from '../data/rhythms';
@@ -118,6 +118,7 @@ export function MainScreen() {
   const st = useStore(player);
   const cat = useStore(catalog);
   const metroOn = useStore(metroRunning);
+  const light = useStore(engineMode) === 'hafif';
   const [menu, setMenu] = useState(false);
   const [timerSheet, setTimerSheet] = useState(false);
   const [orderSheet, setOrderSheet] = useState(false);
@@ -218,6 +219,8 @@ export function MainScreen() {
           )}
         </div>
       </section>
+
+      {light && <p className="light-hint">Hafif ses motoru açık: tempoyu değiştirmek için önce STOP, sonra tempoyu ayarlayıp START.</p>}
 
       <LoopBar />
 

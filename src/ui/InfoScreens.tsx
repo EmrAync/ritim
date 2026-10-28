@@ -78,6 +78,9 @@ export function HelpScreen() {
           Büyük düğmeyi parmağınızla çevirin, ya da <b>−</b> / <b>+</b> ile birer birer değiştirin. <b>TAP</b>’e istediğiniz hızda 3–4 kez vurursanız tempo ona ayarlanır. Ses
           tonu değişmez. Düğmedeki küçük çizgi ritmin kaydedildiği tempodur.
         </p>
+        <p>
+          Menüde “Hafif ses motoru” açıksa (eski telefonlar için) tempoyu müzik çalarken değiştirmeyin: önce <b>STOP</b>, sonra tempoyu ayarlayın, sonra <b>START</b>.
+        </p>
         <h3>Zamanlayıcı</h3>
         <p>START’ın altındaki “Süre”ye dokunup ritmin kaç dakika sonra yavaşça kısılıp duracağını seçin.</p>
         <h3>Listelerim</h3>

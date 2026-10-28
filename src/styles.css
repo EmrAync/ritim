@@ -400,6 +400,14 @@ button:disabled {
   padding: 4px 8px;
 }
 
+.light-hint {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .loop {
   flex-shrink: 0;
 }

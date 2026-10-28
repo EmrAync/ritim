@@ -59,7 +59,10 @@ export function Menu({ onClose }: { onClose(): void }) {
           </span>
           <span>
             <b>Hafif ses motoru</b>
-            <small>{mode === 'hafif' ? 'Açık: eski telefonlar için; tempo değişimi daha az akıcı' : 'Ses takılırsa açın (eski / yavaş telefonlar)'}</small>
+            <small>
+              {mode === 'hafif' ? 'Açık. ' : 'Ses takılırsa açın (eski / yavaş telefonlar). '}
+              Bu modda tempoyu müzik çalarken değiştirmeyin: önce STOP, sonra tempoyu ayarlayın, sonra START.
+            </small>
           </span>
         </button>
         {!isStandalone() && (prompt || ios) && (

@@ -1,6 +1,6 @@
 // Service worker: the app shell works offline. Rhythm MP3s are stored by
 // the app itself (Cache "ritim-mp3-v1"), so they are not handled here.
-const SHELL = 'ritim-shell-v3';
+const SHELL = 'ritim-shell-v4';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(['./', 'rhythms.json', 'manifest.webmanifest', 'icon.svg'])).then(() => self.skipWaiting()));
