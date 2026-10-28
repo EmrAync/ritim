@@ -105,7 +105,8 @@ export function HelpScreen() {
         </p>
         <h3>Telefona kurma</h3>
         <p>
-          Android/Chrome: ⋮ menü → “Ana ekrana ekle”. iPhone/Safari: Paylaş ⬆ → “Ana Ekrana Ekle”. Böylece uygulama gibi açılır; çalınan ritimler internetsiz de çalışır.
+          Ana ekranın üstündeki <b>“Telefona uygulama olarak kur”</b> şeridinde <b>Kur</b>’a dokunun (ya da ⋮ menü → “Telefona kur”). Android’de tek dokunuşla kurulur; iPhone’da
+          ekrana gelen 3 adımı izleyin (Paylaş → Ana Ekrana Ekle → Ekle). Böylece uygulama gibi açılır; çalınan ritimler internetsiz de çalışır.
         </p>
       </div>
     </div>

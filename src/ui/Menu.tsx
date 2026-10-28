@@ -1,26 +1,11 @@
 // ⋮ menu: every screen besides the main one, plus app install.
 
 import { engineMode, setEngineMode } from '../audio/player';
-import { createStore, useStore } from '../lib/store';
+import { useStore } from '../lib/store';
 import { Sheet } from './common';
 import { Icon, type IconName } from './icons';
+import { currentRoute, startInstall } from './Install';
 import { go, type Screen } from './nav';
-
-interface InstallPrompt {
-  prompt(): Promise<void>;
-}
-
-export const installPrompt = createStore<InstallPrompt | undefined>(undefined);
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    installPrompt.set(e as unknown as InstallPrompt);
-  });
-}
-
-const isStandalone = (): boolean =>
-  window.matchMedia?.('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 const ITEMS: { icon: IconName; label: string; sub: string; to: Screen }[] = [
   { icon: 'music', label: 'Ritimler', sub: 'Klasöre göre gözat, ara', to: { name: 'library' } },
@@ -32,9 +17,7 @@ const ITEMS: { icon: IconName; label: string; sub: string; to: Screen }[] = [
 ];
 
 export function Menu({ onClose }: { onClose(): void }) {
-  const prompt = useStore(installPrompt);
   const mode = useStore(engineMode);
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   return (
     <Sheet title="Menü" onClose={onClose}>
       <nav className="menu">
@@ -66,21 +49,18 @@ export function Menu({ onClose }: { onClose(): void }) {
             </small>
           </span>
         </button>
-        {!isStandalone() && (prompt || ios) && (
+        {currentRoute() !== 'installed' && (
           <button
             className="menu-item"
             onClick={() => {
-              if (prompt) {
-                void prompt.prompt();
-                installPrompt.set(undefined);
-                onClose();
-              }
+              onClose();
+              void startInstall();
             }}
           >
             <Icon name="phone" />
             <span>
-              <b>Ana ekrana ekle</b>
-              <small>{prompt ? 'Uygulama gibi açılsın' : 'Safari’de Paylaş ⬆ → “Ana Ekrana Ekle”'}</small>
+              <b>Telefona kur</b>
+              <small>Ana ekranda uygulama simgesi olsun</small>
             </span>
           </button>
         )}

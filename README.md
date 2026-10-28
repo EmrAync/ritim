@@ -15,8 +15,11 @@ Telefonda kayıtlı ritimleri tempo ayarıyla çalan basit uygulama. Kurulum ger
 
 ## Telefona kurma
 
-- **Android (Chrome):** ⋮ menü → “Ana ekrana ekle”.
-- **iPhone (Safari):** Paylaş ⬆ → “Ana Ekrana Ekle”.
+Uygulamanın ana ekranındaki **“Telefona uygulama olarak kur”** şeridinde **Kur**’a dokunun:
+
+- **Android (Chrome, Edge):** tek dokunuşla kurulur.
+- **iPhone (Safari):** ekranda 3 adım gösterilir: Paylaş ⬆ → “Ana Ekrana Ekle” → “Ekle”.
+- **Samsung Internet**, iPhone’da Chrome ve WhatsApp/Instagram içinden açılan linkler için de o tarayıcıya özel adımlar gösterilir.
 
 ## Geliştirme
 

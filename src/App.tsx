@@ -5,6 +5,7 @@ import { refreshOffline } from './data/offline';
 import { useStore } from './lib/store';
 import { Toast } from './ui/common';
 import { HelpScreen, OfflineScreen } from './ui/InfoScreens';
+import { InstallSheet } from './ui/Install';
 import { LibraryScreen } from './ui/Library';
 import { checkLinkImport } from './ui/listShare';
 import { ImportPrompt, ListScreen, ListsScreen } from './ui/Lists';
@@ -44,6 +45,7 @@ export function App() {
       {s.name === 'offline' && <OfflineScreen />}
       {s.name === 'help' && <HelpScreen />}
       <ImportPrompt />
+      <InstallSheet />
       <Toast />
     </div>
   );

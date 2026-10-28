@@ -11,6 +11,7 @@ import { useStore } from '../lib/store';
 import { Sheet } from './common';
 import { Icon } from './icons';
 import { Knob } from './Knob';
+import { InstallBanner } from './Install';
 import { Menu } from './Menu';
 import { go } from './nav';
 
@@ -164,6 +165,8 @@ export function MainScreen() {
           </button>
         </div>
       </header>
+
+      <InstallBanner />
 
       <button className="order-chip" onClick={() => setOrderSheet(true)}>
         <Icon name={list ? 'list' : 'music'} size={18} />

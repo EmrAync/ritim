@@ -168,6 +168,111 @@ button:disabled {
   gap: 10px;
 }
 
+.install-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(245, 165, 36, 0.18), rgba(245, 165, 36, 0.06));
+  border: 1px solid rgba(245, 165, 36, 0.45);
+  border-radius: 14px;
+  padding: 6px 6px 6px 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.install-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  color: var(--text);
+}
+
+.install-text b {
+  font-size: 15px;
+}
+
+.install-text small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.install-go {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+.install-steps {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.install-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.install-steps small {
+  color: var(--muted);
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.inline-ico {
+  vertical-align: -5px;
+  color: #4ea1ff;
+  margin: 0 2px;
+}
+
+.inline-key {
+  display: inline-block;
+  min-width: 26px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 6px;
+  background: var(--surface-2);
+}
+
+.install-arrow {
+  text-align: center;
+  color: #4ea1ff;
+  font-weight: 700;
+  animation: bob 1.2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+a.primary-btn {
+  text-decoration: none;
+}
+
 .order-chip {
   display: flex;
   align-items: center;
