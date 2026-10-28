@@ -972,6 +972,19 @@ button:disabled {
   color: var(--good);
 }
 
+.ex-plan {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.ex-plan b {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .stepper-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

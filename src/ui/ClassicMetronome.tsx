@@ -2,7 +2,7 @@
 // gold Maelzel scale). The pendulum swings to one side on every pulse; the
 // brass weight shows the tempo and can be dragged like on the real thing.
 
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, type PointerEvent } from 'react';
 import { metroBpm, metronome, metroRunning } from '../audio/metronome';
 import { useStore } from '../lib/store';
 
@@ -53,23 +53,24 @@ function Grain({ clip }: { clip: string }) {
 /** `onToggle`: START/STOP, built into the wooden base as a brass plate. */
 export function ClassicMetronome({ bpm, onChange, onToggle }: { bpm: number; onChange(v: number): void; onToggle(): void }) {
   const running = useStore(metroRunning);
-  const [angle, setAngle] = useState(0);
   const svg = useRef<SVGSVGElement>(null);
+  // The pendulum is moved directly (no React render per frame: cheap on slow phones).
+  const pendulum = useRef<SVGGElement>(null);
   const drag = useRef(false);
 
   useEffect(() => {
+    const rotate = (a: number) => pendulum.current?.setAttribute('transform', `rotate(${a.toFixed(2)} 150 ${PIVOT_Y})`);
     if (!running) {
-      setAngle(0);
+      rotate(0);
       return;
     }
     let raf = 0;
     const loop = () => {
       const v = metronome.current();
-      const t = metronome.now();
       if (v) {
         const p = 60 / metroBpm();
-        const x = Math.max(0, Math.min(1, (t - v.time) / p));
-        setAngle(SWING * (v.n % 2 ? -1 : 1) * Math.cos(Math.PI * x));
+        const x = Math.max(0, Math.min(1, (metronome.now() - v.time) / p));
+        rotate(SWING * (v.n % 2 ? -1 : 1) * Math.cos(Math.PI * x));
       }
       raf = requestAnimationFrame(loop);
     };
@@ -204,7 +205,7 @@ export function ClassicMetronome({ bpm, onChange, onToggle }: { bpm: number; onC
         </text>
 
         {/* Pendulum: steel rod, brass weight, pivot */}
-        <g transform={`rotate(${angle} 150 ${PIVOT_Y})`}>
+        <g ref={pendulum} transform={`rotate(0 150 ${PIVOT_Y})`}>
           <rect x="148.4" y="38" width="3.2" height={PIVOT_Y - 38} rx="1.2" fill="url(#msteel)" />
           <rect x="147.6" y="36" width="4.8" height="6" rx="1" fill="#c7cbd0" />
           <g className="mweight">

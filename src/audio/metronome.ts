@@ -4,7 +4,7 @@
 // Exercise mode changes the tempo bar by bar and can leave bars silent.
 
 import { createStore, persist } from '../lib/store';
-import { exerciseMuted, exerciseTempo } from './exercise';
+import { exerciseBars, exerciseMuted, exerciseTempo } from './exercise';
 import { masterOut, unlockAudio } from './context';
 import { playVoice, type Voice } from './drums';
 import { readLocal, writeLocal } from '../lib/store';
@@ -217,7 +217,12 @@ class Metronome {
     if (!ex.on || !run || run.finished) return;
     const bars = run.bars + 1;
     const sec = this.nextTime - this.exStart;
-    if (ex.totalMin > 0 && sec >= ex.totalMin * 60) {
+    const bounded = ex.finish === 'hedef' ? exerciseBars(ex) : undefined;
+    const over =
+      ex.finish === 'sure'
+        ? sec >= ex.totalMin * 60
+        : ex.finish === 'hedef' && (bounded !== undefined ? bars >= bounded : ex.kind === 'sure' && sec >= ex.rampMin * 60);
+    if (over) {
       exerciseRun.set({ ...run, bars, finished: true });
       const at = this.nextTime;
       this.nextTime = Infinity;
@@ -323,7 +328,13 @@ class Metronome {
       this.locked = false;
       this.restartBar(0.05);
     }
-    while (this.nextTime < ctx.currentTime + LOOKAHEAD_S) {
+    // Back from the background (timers were throttled): skip the missed clicks
+    // instead of scheduling them all at once, which can freeze a phone.
+    if (this.nextTime < ctx.currentTime - 0.25) {
+      this.nextTime = ctx.currentTime + 0.05;
+      this.visuals = [];
+    }
+    for (let guard = 0; guard < 128 && this.nextTime < ctx.currentTime + LOOKAHEAD_S; guard++) {
       const ev = this.plan[this.idx];
       this.play(ev, Math.max(this.nextTime, ctx.currentTime));
       const nextAt = this.idx + 1 < this.plan.length ? this.plan[this.idx + 1].at : this.beats;

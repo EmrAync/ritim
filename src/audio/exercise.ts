@@ -2,6 +2,8 @@
 // a silent "inner tempo" bar. The engine asks at each bar line.
 
 export type ExerciseKind = 'adim' | 'sure' | 'piramit' | 'aralik';
+/** hedef: ends once the program is through (time worked out from the settings); sure: after totalMin; sinirsiz: until STOP. */
+export type ExerciseFinish = 'hedef' | 'sure' | 'sinirsiz';
 
 export interface ExerciseSettings {
   on: boolean;
@@ -16,7 +18,8 @@ export interface ExerciseSettings {
   everyBars: number;
   /** Minutes the gradual change takes (sure). */
   rampMin: number;
-  /** Stop after this many minutes (0 = until STOP). */
+  finish: ExerciseFinish;
+  /** Minutes for finish = 'sure'. */
   totalMin: number;
   /** Inner tempo: play `playBars`, then `muteBars` silent bars. */
   gap: boolean;
@@ -39,20 +42,21 @@ export const DEFAULT_EXERCISE: ExerciseSettings = {
   step: 4,
   everyBars: 4,
   rampMin: 5,
-  totalMin: 0,
+  finish: 'hedef',
+  totalMin: 10,
   gap: false,
   playBars: 4,
   muteBars: 2,
 };
 
 export const EXERCISE_PRESETS: { label: string; set: Partial<ExerciseSettings> }[] = [
-  { label: 'Isınma', set: { kind: 'adim', start: 60, target: 100, step: 4, everyBars: 4, gap: false } },
-  { label: 'Hız çalışması', set: { kind: 'adim', start: 80, target: 140, step: 2, everyBars: 2, gap: false } },
-  { label: 'Yavaşlama', set: { kind: 'adim', start: 120, target: 70, step: 5, everyBars: 4, gap: false } },
-  { label: '5 dk hızlan', set: { kind: 'sure', start: 70, target: 110, rampMin: 5, gap: false } },
-  { label: 'Piramit', set: { kind: 'piramit', start: 80, target: 120, step: 4, everyBars: 2, gap: false } },
-  { label: 'Hızlı–yavaş', set: { kind: 'aralik', start: 90, target: 130, everyBars: 4, gap: false } },
-  { label: 'İç tempo', set: { kind: 'adim', start: 90, target: 90, gap: true, playBars: 4, muteBars: 4 } },
+  { label: 'Isınma', set: { kind: 'adim', start: 60, target: 100, step: 4, everyBars: 4, gap: false, finish: 'hedef' } },
+  { label: 'Hız çalışması', set: { kind: 'adim', start: 80, target: 140, step: 2, everyBars: 2, gap: false, finish: 'hedef' } },
+  { label: 'Yavaşlama', set: { kind: 'adim', start: 120, target: 70, step: 5, everyBars: 4, gap: false, finish: 'hedef' } },
+  { label: '5 dk hızlan', set: { kind: 'sure', start: 70, target: 110, rampMin: 5, gap: false, finish: 'hedef' } },
+  { label: 'Piramit', set: { kind: 'piramit', start: 80, target: 120, step: 4, everyBars: 2, gap: false, finish: 'hedef' } },
+  { label: 'Hızlı–yavaş', set: { kind: 'aralik', start: 90, target: 130, everyBars: 4, gap: false, finish: 'sinirsiz' } },
+  { label: 'İç tempo', set: { kind: 'adim', start: 90, target: 90, gap: true, playBars: 4, muteBars: 4, finish: 'sinirsiz' } },
 ];
 
 const clampBpm = (v: number): number => Math.max(30, Math.min(300, Math.round(v)));
@@ -85,6 +89,55 @@ export function exerciseTempo(ex: ExerciseSettings, bars: number, sec: number): 
   }
 }
 
+/**
+ * Bars the program takes when it ends at the target ('hedef'): the climb
+ * plus one block at the target (pyramid: up, down, one block at the start).
+ * Undefined for time-based or endless programs.
+ */
+export function exerciseBars(ex: ExerciseSettings): number | undefined {
+  const span = Math.abs(clampBpm(ex.target) - clampBpm(ex.start));
+  const steps = Math.ceil(span / Math.max(1, ex.step));
+  const every = Math.max(1, Math.round(ex.everyBars));
+  if (ex.kind === 'adim') return (steps + 1) * every;
+  if (ex.kind === 'piramit') return (2 * steps + 1) * every;
+  return undefined;
+}
+
+/** Seconds for the given number of bars (pulses per bar = beats) at the program's tempos. */
+function barsSeconds(ex: ExerciseSettings, bars: number, beats: number): number {
+  let sec = 0;
+  for (let b = 0; b < bars; b++) sec += (beats * 60) / exerciseTempo(ex, b, sec);
+  return sec;
+}
+
+/** How long the exercise runs (seconds), or undefined until STOP. */
+export function exerciseDuration(ex: ExerciseSettings, beats: number): number | undefined {
+  if (ex.finish === 'sure') return ex.totalMin * 60;
+  if (ex.finish === 'sinirsiz') return undefined;
+  if (ex.kind === 'sure') return ex.rampMin * 60;
+  const bars = exerciseBars(ex);
+  return bars === undefined ? undefined : barsSeconds(ex, bars, beats);
+}
+
+/** Seconds until the target tempo is first reached (adim / piramit / sure). */
+export function timeToTarget(ex: ExerciseSettings, beats: number): number | undefined {
+  if (ex.kind === 'sure') return ex.rampMin * 60;
+  if (ex.kind === 'aralik') return undefined;
+  const span = Math.abs(clampBpm(ex.target) - clampBpm(ex.start));
+  const steps = Math.ceil(span / Math.max(1, ex.step));
+  return barsSeconds(ex, steps * Math.max(1, Math.round(ex.everyBars)), beats);
+}
+
+/** Largest "kaç ölçüde bir" whose climb to the target still fits in `seconds`. */
+export function fitEveryBars(ex: ExerciseSettings, beats: number, seconds: number): number {
+  let best = 1;
+  for (let every = 1; every <= 64; every++) {
+    if ((timeToTarget({ ...ex, everyBars: every }, beats) ?? 0) <= seconds) best = every;
+    else break;
+  }
+  return best;
+}
+
 /** True when the bar after `bars` complete bars is a silent inner-tempo bar. */
 export function exerciseMuted(ex: ExerciseSettings, bars: number): boolean {
   if (!ex.gap) return false;
@@ -108,7 +161,8 @@ export function sanitizeExercise(raw: unknown): ExerciseSettings {
     step: num(r.step, d.step, 1, 40),
     everyBars: num(r.everyBars, d.everyBars, 1, 64),
     rampMin: num(r.rampMin, d.rampMin, 1, 120),
-    totalMin: num(r.totalMin, d.totalMin, 0, 240),
+    finish: r.finish === 'sure' || r.finish === 'sinirsiz' || r.finish === 'hedef' ? r.finish : 'hedef',
+    totalMin: num(r.totalMin, d.totalMin, 1, 240),
     gap: r.gap === true,
     playBars: num(r.playBars, d.playBars, 1, 32),
     muteBars: num(r.muteBars, d.muteBars, 0, 32),

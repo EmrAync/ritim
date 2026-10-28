@@ -40,6 +40,15 @@ const PAD = 1;
 /** Tempo changes are heard this far ahead (s), past the metronome's lookahead. */
 const CHANGE_AHEAD = 0.14;
 
+/**
+ * Phones with little memory or few cores get a mono stretcher: half the
+ * memory for the decoded loop and half the processing.
+ */
+export const lowPowerDevice = (): boolean => {
+  const n = navigator as Navigator & { deviceMemory?: number };
+  return (n.deviceMemory ?? 8) <= 4 || (n.hardwareConcurrency ?? 8) <= 4;
+};
+
 export const stretchSupported = (): boolean =>
   typeof AudioWorkletNode !== 'undefined' && typeof WebAssembly === 'object' && typeof AudioContext !== 'undefined' && 'audioWorklet' in AudioContext.prototype;
 
@@ -64,6 +73,7 @@ export class StretchEngine implements RhythmEngine {
   private len = 0;
   private playing = false;
   private readonly tl = new Timeline();
+  private channels = 2;
 
   private constructor(private readonly ctx: AudioContext) {}
 
@@ -71,7 +81,8 @@ export class StretchEngine implements RhythmEngine {
     const url = new URL('vendor/SignalsmithStretch.mjs', document.baseURI).href;
     const mod = (await withTimeout(import(/* @vite-ignore */ url), 15000, 'Tempo motoru yüklenemedi')) as { default: CreateStretch };
     const e = new StretchEngine(ctx);
-    e.node = await withTimeout(mod.default(ctx, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] }), 15000, 'Tempo motoru başlatılamadı');
+    e.channels = lowPowerDevice() ? 1 : 2;
+    e.node = await withTimeout(mod.default(ctx, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [e.channels] }), 15000, 'Tempo motoru başlatılamadı');
     e.node.connect(dest);
     // Lighter than the default preset and spread evenly over time, so slower phones do not stutter.
     await e.node.configure({ blockMs: 100, intervalMs: 40, splitComputation: true });
@@ -86,19 +97,29 @@ export class StretchEngine implements RhythmEngine {
   async load(r: Rhythm, blob: Blob, decoded?: AudioBuffer): Promise<void> {
     if (this.id === r.id) return;
     this.stop();
+    // Free the previous loop first, so two decoded loops are never held at once.
+    const node = this.node!;
+    this.id = undefined;
+    await node.dropBuffers();
     const buf = decoded ?? (await this.ctx.decodeAudioData(await blob.arrayBuffer()));
     const { start, len } = loopFrames(buf, r.duration);
     const pad = Math.min(Math.round(PAD * buf.sampleRate), len);
-    const chans = [0, Math.min(1, buf.numberOfChannels - 1)].map((c) => {
-      const src = buf.getChannelData(c).subarray(start, start + len);
+    const stereo = this.channels > 1 && buf.numberOfChannels > 1;
+    const left = buf.getChannelData(0);
+    const right = buf.getChannelData(buf.numberOfChannels > 1 ? 1 : 0);
+    const sources: Float32Array[] = stereo ? [left, right] : [left];
+    if (!stereo && buf.numberOfChannels > 1) {
+      // Mono mix in place (the decoded buffer is not used afterwards).
+      for (let i = start; i < start + len; i++) left[i] = (left[i] + right[i]) * 0.5;
+    }
+    const chans = sources.map((ch) => {
+      const src = ch.subarray(start, start + len);
       const out = new Float32Array(len + 2 * pad);
       out.set(src.subarray(len - pad), 0);
       out.set(src, pad);
       out.set(src.subarray(0, pad), pad + len);
       return out;
     });
-    const node = this.node!;
-    await node.dropBuffers();
     await node.addBuffers(chans, chans.map((c) => c.buffer));
     this.padSec = pad / buf.sampleRate;
     this.len = len / buf.sampleRate;

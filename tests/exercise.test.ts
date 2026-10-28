@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_EXERCISE, exerciseMuted, exerciseTempo, sanitizeExercise } from '../src/audio/exercise';
+import { DEFAULT_EXERCISE, exerciseBars, exerciseDuration, exerciseMuted, exerciseTempo, fitEveryBars, sanitizeExercise, timeToTarget } from '../src/audio/exercise';
 
 const ex = (p: Partial<typeof DEFAULT_EXERCISE>) => ({ ...DEFAULT_EXERCISE, on: true, ...p });
 
@@ -34,5 +34,21 @@ describe('exercise', () => {
     expect(exerciseMuted(ex({ gap: false }), 2)).toBe(false);
     const s = sanitizeExercise({ on: 'yes', kind: 'x', start: 9999, step: 0 });
     expect([s.on, s.kind, s.start, s.step]).toEqual([false, 'adim', 300, 1]);
+  });
+
+  it('works out how long a program takes and fits the steps to a time', () => {
+    const e = ex({ kind: 'adim', start: 80, target: 90, step: 4, everyBars: 2, finish: 'hedef' });
+    expect(exerciseBars(e)).toBe(8); // 3 steps to 90, then one block at 90
+    const bar = (b: number) => (4 * 60) / b;
+    expect(timeToTarget(e, 4)).toBeCloseTo(2 * (bar(80) + bar(84) + bar(88)));
+    expect(exerciseDuration(e, 4)).toBeCloseTo(2 * (bar(80) + bar(84) + bar(88) + bar(90)));
+    expect(exerciseDuration({ ...e, finish: 'sure', totalMin: 5 }, 4)).toBe(300);
+    expect(exerciseDuration({ ...e, finish: 'sinirsiz' }, 4)).toBeUndefined();
+    expect(exerciseDuration(ex({ kind: 'sure', rampMin: 3, finish: 'hedef' }), 4)).toBe(180);
+    const w = ex({ kind: 'adim', start: 60, target: 100, step: 4 });
+    const every = fitEveryBars(w, 4, 300);
+    const climb = timeToTarget({ ...w, everyBars: every }, 4) ?? 0;
+    expect(climb).toBeLessThanOrEqual(300);
+    expect(300 - climb).toBeLessThan(40);
   });
 });

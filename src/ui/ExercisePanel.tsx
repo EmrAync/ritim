@@ -2,13 +2,13 @@
 // changes, total time, inner-tempo silent bars, ready-made programs.
 
 import { useEffect, useState } from 'react';
-import { EXERCISE_KINDS, EXERCISE_PRESETS, type ExerciseSettings } from '../audio/exercise';
+import { EXERCISE_KINDS, EXERCISE_PRESETS, exerciseDuration, fitEveryBars, timeToTarget, type ExerciseFinish, type ExerciseSettings } from '../audio/exercise';
 import { exerciseRun, metronome, metroRunning, metroSettings, updateMetro } from '../audio/metronome';
 import { formatTime } from '../data/rhythms';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
 
-const TOTALS = [0, 5, 10, 15, 20, 30, 45, 60];
+const TOTALS = [5, 10, 15, 20, 30, 45, 60];
 
 function Stepper({ label, value, min, max, step = 1, unit, onChange }: { label: string; value: number; min: number; max: number; step?: number; unit?: string; onChange(v: number): void }) {
   const set = (v: number) => onChange(Math.max(min, Math.min(max, v)));
@@ -53,7 +53,8 @@ export function ExerciseStatus() {
     );
   }
   const sec = metronome.exerciseSeconds();
-  const left = ex.totalMin ? Math.max(0, ex.totalMin * 60 - sec) : undefined;
+  const total = ex.kind === 'aralik' && ex.finish === 'hedef' ? undefined : exerciseDuration(ex, s.beats);
+  const left = total !== undefined ? Math.max(0, total - sec) : undefined;
   return (
     <div className={run.muted ? 'ex-status muted' : 'ex-status'}>
       <b>{run.bpm} BPM</b> → {ex.target} · ölçü {run.bars + 1} · {left !== undefined ? `kalan ${formatTime(left)}` : formatTime(sec)}
@@ -63,7 +64,14 @@ export function ExerciseStatus() {
 }
 
 export function ExercisePanel() {
-  const ex = useStore(metroSettings).exercise;
+  const ms = useStore(metroSettings);
+  const ex = ms.exercise;
+  const beats = ms.beats;
+  const finish: ExerciseFinish = ex.kind === 'aralik' && ex.finish === 'hedef' ? 'sinirsiz' : ex.finish;
+  const climb = timeToTarget(ex, beats);
+  const total = finish === 'sinirsiz' ? undefined : exerciseDuration({ ...ex, finish }, beats);
+  const climbs = ex.kind === 'adim' || ex.kind === 'piramit';
+  const fitTarget = ex.kind === 'piramit' ? (ex.totalMin * 60) / 2 : ex.totalMin * 60;
   const set = (patch: Partial<ExerciseSettings>) => updateMetro((x) => ({ ...x, exercise: { ...x.exercise, ...patch } }));
   const kind = EXERCISE_KINDS.find((k) => k.id === ex.kind)!;
   return (
@@ -97,14 +105,54 @@ export function ExercisePanel() {
             {ex.kind !== 'sure' && <Stepper label="Kaç ölçüde bir" value={ex.everyBars} min={1} max={64} unit="ölçü" onChange={(v) => set({ everyBars: v })} />}
             {ex.kind === 'sure' && <Stepper label="Hedefe varış" value={ex.rampMin} min={1} max={120} unit="dk" onChange={(v) => set({ rampMin: v })} />}
           </div>
-          <span className="label">Toplam süre (dolunca durur)</span>
+          <span className="label">Bitiş</span>
           <div className="chip-grid">
-            {TOTALS.map((m) => (
-              <button key={m} className={ex.totalMin === m ? 'chip on' : 'chip'} onClick={() => set({ totalMin: m })}>
-                {m ? `${m} dk` : 'Sınırsız'}
+            {ex.kind !== 'aralik' && (
+              <button className={finish === 'hedef' ? 'chip on' : 'chip'} onClick={() => set({ finish: 'hedef' })}>
+                {ex.kind === 'piramit' ? 'Piramit bitince' : 'Hedefe varınca'}
               </button>
-            ))}
+            )}
+            <button className={finish === 'sure' ? 'chip on' : 'chip'} onClick={() => set({ finish: 'sure' })}>
+              Belirli süre
+            </button>
+            <button className={finish === 'sinirsiz' ? 'chip on' : 'chip'} onClick={() => set({ finish: 'sinirsiz' })}>
+              Sınırsız
+            </button>
           </div>
+          {finish === 'sure' && (
+            <div className="chip-grid">
+              {TOTALS.map((m) => (
+                <button key={m} className={ex.totalMin === m ? 'chip on' : 'chip'} onClick={() => set({ totalMin: m })}>
+                  {m} dk
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="ex-plan">
+            {climb !== undefined && (
+              <span>
+                Hedef tempoya varış: <b>{formatTime(climb)}</b>
+              </span>
+            )}
+            {total !== undefined && (
+              <span>
+                Egzersiz süresi: <b>{formatTime(total)}</b>
+              </span>
+            )}
+            {total === undefined && <span>STOP'a basana kadar sürer.</span>}
+          </div>
+          {finish === 'sure' && climbs && climb !== undefined && Math.abs(climb - fitTarget) > 20 && (
+            <>
+              <p className="hint">
+                {climb < fitTarget
+                  ? `Bu ayarla hedefe ${formatTime(climb)} sonra varılır, kalan sürede hedef tempoda devam eder.`
+                  : `Bu ayarla hedefe ${ex.totalMin} dakikada varılamaz.`}
+              </p>
+              <button className="ghost-btn" onClick={() => set({ everyBars: fitEveryBars(ex, beats, fitTarget) })}>
+                Adımları {ex.totalMin} dakikaya yay
+              </button>
+            </>
+          )}
           <button className={ex.gap ? 'toggle on' : 'toggle'} onClick={() => set({ gap: !ex.gap })} role="switch" aria-checked={ex.gap}>
             <span className="toggle-knob" />
             <span>
