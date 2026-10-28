@@ -50,7 +50,8 @@ function Grain({ clip }: { clip: string }) {
   return <g clipPath={`url(#${clip})`}>{lines}</g>;
 }
 
-export function ClassicMetronome({ bpm, onChange }: { bpm: number; onChange(v: number): void }) {
+/** `onToggle`: START/STOP, built into the wooden base as a brass plate. */
+export function ClassicMetronome({ bpm, onChange, onToggle }: { bpm: number; onChange(v: number): void; onToggle(): void }) {
   const running = useStore(metroRunning);
   const [angle, setAngle] = useState(0);
   const svg = useRef<SVGSVGElement>(null);
@@ -97,6 +98,7 @@ export function ClassicMetronome({ bpm, onChange }: { bpm: number; onChange(v: n
   const yw = yOf(bpm);
   return (
     <div className="classic">
+      <div className="classic-stage">
       <svg
         ref={svg}
         className="classic-svg"
@@ -213,6 +215,11 @@ export function ClassicMetronome({ bpm, onChange }: { bpm: number; onChange(v: n
         </g>
         <circle cx="150" cy={PIVOT_Y} r="4.5" fill="#bfc3c8" stroke="#555" strokeWidth="0.8" />
       </svg>
+      <button className={running ? 'classic-start on' : 'classic-start'} onClick={onToggle} aria-label={running ? 'Metronomu durdur' : 'Metronomu başlat'}>
+        <span className="classic-lamp" />
+        {running ? 'STOP' : 'START'}
+      </button>
+      </div>
       <div className="classic-readout">
         <span className="classic-bpm">♩ = {bpm}</span>
         <span className="classic-name">{tempoName(bpm)}</span>

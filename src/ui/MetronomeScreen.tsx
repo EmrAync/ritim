@@ -134,7 +134,7 @@ export function MetronomeScreen() {
 
         <div className="tempo">
           {s.view === 'klasik' ? (
-            <ClassicMetronome bpm={bpm} onChange={setBpm} />
+            <ClassicMetronome bpm={bpm} onChange={setBpm} onToggle={() => metronome.toggle()} />
           ) : (
             <Knob value={bpm} min={lo} max={hi} onChange={setBpm} caption={ex ? 'BPM · egzersiz' : follow ? 'BPM · ritimle' : 'BPM'} label="Metronom temposu" />
           )}
@@ -158,6 +158,7 @@ export function MetronomeScreen() {
         </div>
 
         <div className="metro-actions">
+          {s.view !== 'klasik' && (
           <button className={running ? 'start-btn on' : 'start-btn'} onClick={() => metronome.toggle()}>
             {running ? (
               <>
@@ -169,10 +170,17 @@ export function MetronomeScreen() {
               </>
             )}
           </button>
-          <button className="one-btn" onPointerDown={() => metronome.tapOne()}>
-            Bir'e
-            <br />
-            dokun
+          )}
+          <button className={s.view === 'klasik' ? 'one-btn wide' : 'one-btn'} onPointerDown={() => metronome.tapOne()}>
+            {s.view === 'klasik' ? (
+              "Bir'e dokun"
+            ) : (
+              <>
+                Bir'e
+                <br />
+                dokun
+              </>
+            )}
           </button>
         </div>
 

@@ -144,16 +144,21 @@ export function playVoice(ctx: BaseAudioContext, dest: AudioNode, voice: Voice, 
       tone(ctx, dest, t, 160, 110, 0.08, 0.6 * v, 0.25);
       return metal(ctx, dest, t, 700, 0.06 * v, 0.15);
     case 'mechTick':
-      // Escapement click of a wind-up metronome, with a hollow wooden box resonance.
-      hiss(ctx, dest, t, 'bandpass', 3200, 2.5, 0.7 * v, 0.012);
-      tone(ctx, dest, t, 1900, 1750, 0.004, 0.22 * v, 0.018, 'triangle');
-      tone(ctx, dest, t, 620, 560, 0.01, 0.28 * v, 0.05);
+      // Wind-up metronome: the escapement's sharp click exciting the hollow
+      // wooden case (a few resonant modes), with a little metal ring.
+      hiss(ctx, dest, t, 'highpass', 2200, 0.7, 0.42 * v, 0.004);
+      tone(ctx, dest, t, 1260, 1240, 0.02, 0.42 * v, 0.085);
+      tone(ctx, dest, t, 2380, 2350, 0.02, 0.27 * v, 0.05);
+      tone(ctx, dest, t, 3920, 3900, 0.02, 0.17 * v, 0.03);
+      tone(ctx, dest, t, 690, 660, 0.03, 0.26 * v, 0.11);
+      tone(ctx, dest, t, 5300, 5300, 0.01, 0.08 * v, 0.012, 'triangle');
       return;
     case 'mechBell':
       // Small bell struck on the first beat (bell metronomes).
-      tone(ctx, dest, t, 2093, 2093, 0.5, 0.3 * v, 1.1);
-      tone(ctx, dest, t, 5274, 5270, 0.5, 0.08 * v, 0.5);
-      tone(ctx, dest, t, 3140, 3138, 0.5, 0.06 * v, 0.7);
+      tone(ctx, dest, t, 2093, 2093, 0.5, 0.36 * v, 1.3);
+      tone(ctx, dest, t, 4186, 4180, 0.5, 0.1 * v, 0.7);
+      tone(ctx, dest, t, 5650, 5640, 0.5, 0.06 * v, 0.45);
+      tone(ctx, dest, t, 3140, 3138, 0.5, 0.08 * v, 0.9);
       return;
     case 'zil':
       tone(ctx, dest, t, 2637, 2630, 0.5, 0.12 * v, 0.9);

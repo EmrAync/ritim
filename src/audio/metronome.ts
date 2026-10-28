@@ -139,7 +139,14 @@ class Metronome {
     this.ctx = ctx;
     if (!this.out) {
       this.out = ctx.createGain();
-      this.out.connect(masterOut());
+      // Limiter: accents (bell + tick, kick + hat) never clip on phone speakers.
+      const limit = ctx.createDynamicsCompressor();
+      limit.threshold.value = -4;
+      limit.knee.value = 2;
+      limit.ratio.value = 12;
+      limit.attack.value = 0.001;
+      limit.release.value = 0.08;
+      this.out.connect(limit).connect(masterOut());
     }
     this.out.gain.value = metroSettings.get().volume;
     metroRunning.set(true);
