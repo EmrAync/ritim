@@ -62,6 +62,7 @@ export function TunerScreen() {
   const pl = useStore(player);
   const metroOn = useStore(metroRunning);
   const [, tick] = useState(0);
+  const [levelOpen, setLevelOpen] = useState(false);
   const t = currentTuning(s);
 
   useEffect(() => {
@@ -112,11 +113,25 @@ export function TunerScreen() {
         {t.instrument === 'baglama' && (
           <div className="chips-row tuner-level">
             <span className="muted">Ses seviyesi (alt tel)</span>
-            {SHIFTS.map((sh) => (
-              <button key={sh} className={s.shift === sh ? 'chip on' : 'chip'} onClick={() => setS({ shift: sh })}>
-                {noteName(57 + sh, s.naming)}
+            {levelOpen ? (
+              SHIFTS.map((sh) => (
+                <button
+                  key={sh}
+                  className={s.shift === sh ? 'chip on' : 'chip'}
+                  onClick={() => {
+                    setS({ shift: sh });
+                    setLevelOpen(false);
+                  }}
+                >
+                  {noteName(57 + sh, s.naming)}
+                </button>
+              ))
+            ) : (
+              // Only the chosen level; tap to choose another.
+              <button className="chip on" onClick={() => setLevelOpen(true)} aria-expanded={false}>
+                {noteName(57 + s.shift, s.naming)} <Icon name="down" size={16} />
               </button>
-            ))}
+            )}
           </div>
         )}
         {t.note && <p className="hint center">{t.note}</p>}
