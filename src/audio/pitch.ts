@@ -133,24 +133,61 @@ export interface TuningString {
   midi: number;
 }
 
+export type Instrument = 'kromatik' | 'gitar' | 'baglama' | 'ozel';
+
 export interface Tuning {
   id: string;
+  instrument: Instrument;
   name: string;
-  /** Strings from low to high; empty = chromatic. */
+  /** Strings (MIDI, concert pitch); empty = chromatic. Bağlama: alt, orta, üst. */
   strings: number[];
   /** Match strings by note name only (octave varies between instruments). */
   anyOctave?: boolean;
+  /** Names of the string groups (bağlama: Alt / Orta / Üst). */
+  labels?: string[];
+  /** Where the tuning is usual. */
+  note?: string;
 }
 
 // MIDI numbers: E2 40, A2 45, D3 50, G3 55, B3 59, E4 64; La4 = 69.
+// Bağlama düzenleri in Turkish notation, alt tel = La (sources: Kültür ve
+// Turizm Bakanlığı, Türkü Sitesi, muzikogretmeni.net, tr.wikipedia "Bağlama").
+// Notes are matched in any octave, so kısa sap and uzun sap both work; the
+// "ses seviyesi" setting moves all strings together (e.g. bağlama düzeni in
+// La karar = Re–Sol–La).
+const LA = 57;
+const RE = 62;
+const MI = 64;
+const FA = 65;
+const FAD = 66;
+const SOL = 67;
+const DO = 60;
+const BAGLAMA = ['Alt', 'Orta', 'Üst'];
+
 export const TUNINGS: Tuning[] = [
-  { id: 'kromatik', name: 'Kromatik (her nota)', strings: [] },
-  { id: 'gitar', name: 'Gitar · standart (Mi La Re Sol Si Mi)', strings: [40, 45, 50, 55, 59, 64] },
-  { id: 'gitar-dropd', name: 'Gitar · Drop D', strings: [38, 45, 50, 55, 59, 64] },
-  { id: 'gitar-yarim', name: 'Gitar · yarım ses pes', strings: [39, 44, 49, 54, 58, 63] },
-  { id: 'baglama-bozuk', name: 'Bağlama · bozuk düzen (Re Sol La)', strings: [62, 67, 69], anyOctave: true },
-  { id: 'ozel', name: 'Kendi düzenim', strings: [62, 67, 69], anyOctave: true },
+  { id: 'kromatik', instrument: 'kromatik', name: 'Kromatik (her nota)', strings: [] },
+  { id: 'gitar', instrument: 'gitar', name: 'Standart (Mi La Re Sol Si Mi)', strings: [40, 45, 50, 55, 59, 64] },
+  { id: 'gitar-dropd', instrument: 'gitar', name: 'Drop D', strings: [38, 45, 50, 55, 59, 64] },
+  { id: 'gitar-yarim', instrument: 'gitar', name: 'Yarım ses pes', strings: [39, 44, 49, 54, 58, 63] },
+  { id: 'baglama-bozuk', instrument: 'baglama', name: 'Bozuk (Kara) düzen', strings: [LA, RE, SOL], anyOctave: true, labels: BAGLAMA, note: 'Uzun sapta en yaygın düzen.' },
+  { id: 'baglama-baglama', instrument: 'baglama', name: 'Bağlama düzeni', strings: [LA, RE, MI], anyOctave: true, labels: BAGLAMA, note: 'Kısa sapta en yaygın düzen. La kararda çalmak için ses seviyesini “Re” seçin (Re–Sol–La).' },
+  { id: 'baglama-misket', instrument: 'baglama', name: 'Misket düzeni', strings: [LA, RE, FAD], anyOctave: true, labels: BAGLAMA },
+  { id: 'baglama-fa-mustezat', instrument: 'baglama', name: 'Fa müstezat (Acem) düzeni', strings: [LA, RE, FA], anyOctave: true, labels: BAGLAMA },
+  { id: 'baglama-abdal', instrument: 'baglama', name: 'Abdal (Bozlak) düzeni', strings: [LA, LA, SOL], anyOctave: true, labels: BAGLAMA, note: 'Açıktan çalma; alt ve orta teller aynı ses.' },
+  { id: 'baglama-do-mustezat', instrument: 'baglama', name: 'Do müstezat (Rast) düzeni', strings: [LA, DO, SOL], anyOctave: true, labels: BAGLAMA },
+  { id: 'baglama-kutahya', instrument: 'baglama', name: 'Kütahya düzeni', strings: [LA, RE, RE], anyOctave: true, labels: BAGLAMA },
+  { id: 'ozel', instrument: 'ozel', name: 'Kendi düzenim', strings: [LA, RE, SOL], anyOctave: true },
 ];
+
+export const INSTRUMENTS: { id: Instrument; label: string }[] = [
+  { id: 'kromatik', label: 'Kromatik' },
+  { id: 'baglama', label: 'Bağlama' },
+  { id: 'gitar', label: 'Gitar' },
+  { id: 'ozel', label: 'Kendi düzenim' },
+];
+
+/** The tuning with all strings moved by `shift` semitones (bağlama ses seviyesi). */
+export const shifted = (t: Tuning, shift: number): Tuning => (shift ? { ...t, strings: t.strings.map((m) => m + shift) } : t);
 
 /** Index of the tuning string the note belongs to (nearest), or -1. */
 export function matchString(t: Tuning, midiFloat: number): number {

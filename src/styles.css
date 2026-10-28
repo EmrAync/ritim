@@ -950,6 +950,26 @@ button:disabled {
   color: var(--accent);
 }
 
+.segmented.wide {
+  align-self: stretch;
+}
+
+.segmented.wide button {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+.tuner-level {
+  justify-content: center;
+}
+
+.tuner-level .chip {
+  min-width: 46px;
+  padding: 6px 8px;
+}
+
 .ex-status {
   text-align: center;
   font-size: 14px;

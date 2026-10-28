@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TUNINGS, detectPitch, detectPitchFine, matchString, median, noteName, octaveOf, readNote } from '../src/audio/pitch';
+import { TUNINGS, detectPitch, detectPitchFine, matchString, median, noteName, octaveOf, readNote, shifted } from '../src/audio/pitch';
 
 /** A plucked-string-like tone: fundamental plus decaying harmonics. */
 function tone(freq: number, sr: number, n: number, harmonics = [1, 0.6, 0.35, 0.2]): Float32Array {
@@ -43,9 +43,13 @@ describe('pitch', () => {
     const guitar = TUNINGS.find((t) => t.id === 'gitar')!;
     expect(matchString(guitar, 40.2)).toBe(0); // low E
     expect(matchString(guitar, 64)).toBe(5); // high E, not the low one
-    const baglama = TUNINGS.find((t) => t.id === 'baglama-bozuk')!;
-    expect(matchString(baglama, 57)).toBe(2); // La one octave lower still matches La
-    expect(matchString(baglama, 55.1)).toBe(1); // Sol
+    const bozuk = TUNINGS.find((t) => t.id === 'baglama-bozuk')!; // alt La, orta Re, üst Sol
+    expect(matchString(bozuk, 69)).toBe(0); // La an octave higher still matches the alt tel
+    expect(matchString(bozuk, 50.2)).toBe(1); // Re
+    expect(matchString(bozuk, 55.1)).toBe(2); // Sol
+    // Bağlama düzeni at La karar (ses seviyesi Re): Re–Sol–La.
+    const baglama = shifted(TUNINGS.find((t) => t.id === 'baglama-baglama')!, 5);
+    expect(baglama.strings.map((m) => noteName(m, 'solfej'))).toEqual(['Re', 'Sol', 'La']);
     expect(median([3, 1, 2, 10, 2])).toBe(2);
   });
 });

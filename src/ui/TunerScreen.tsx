@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { metronome, metroRunning } from '../audio/metronome';
-import { KOMA_CENTS, TUNINGS, noteName, octaveOf } from '../audio/pitch';
+import { INSTRUMENTS, KOMA_CENTS, TUNINGS, noteName, octaveOf } from '../audio/pitch';
 import { player, stopRhythm } from '../audio/player';
-import { currentTuning, playReference, startTuner, stopTuner, tuner, tunerSettings } from '../audio/tuner';
+import { SHIFTS, currentTuning, playReference, startTuner, stopTuner, tuner, tunerSettings } from '../audio/tuner';
 import { useStore } from '../lib/store';
 import { Header } from './common';
 import { Icon } from './icons';
@@ -87,13 +87,39 @@ export function TunerScreen() {
     <div className="screen">
       <Header title="Akort (Tuner)" />
       <div className="scroll tuner">
-        <div className="chips-scroll">
-          {TUNINGS.map((x) => (
-            <button key={x.id} className={s.tuningId === x.id ? 'chip on' : 'chip'} onClick={() => setS({ tuningId: x.id })}>
-              {x.name}
+        <div className="segmented wide" role="tablist">
+          {INSTRUMENTS.map((x) => (
+            <button
+              key={x.id}
+              role="tab"
+              aria-selected={t.instrument === x.id}
+              className={t.instrument === x.id ? 'on' : ''}
+              onClick={() => setS({ tuningId: TUNINGS.find((y) => y.instrument === x.id)!.id })}
+            >
+              {x.label}
             </button>
           ))}
         </div>
+        {(t.instrument === 'baglama' || t.instrument === 'gitar') && (
+          <div className="chips-scroll">
+            {TUNINGS.filter((x) => x.instrument === t.instrument).map((x) => (
+              <button key={x.id} className={s.tuningId === x.id ? 'chip on' : 'chip'} onClick={() => setS({ tuningId: x.id })}>
+                {x.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {t.instrument === 'baglama' && (
+          <div className="chips-row tuner-level">
+            <span className="muted">Ses seviyesi (alt tel)</span>
+            {SHIFTS.map((sh) => (
+              <button key={sh} className={s.shift === sh ? 'chip on' : 'chip'} onClick={() => setS({ shift: sh })}>
+                {noteName(57 + sh, s.naming)}
+              </button>
+            ))}
+          </div>
+        )}
+        {t.note && <p className="hint center">{t.note}</p>}
 
         <div className={ok ? 'tuner-display ok' : 'tuner-display'}>
           <div className="tuner-note">
@@ -118,7 +144,7 @@ export function TunerScreen() {
             {t.strings.map((m, i) => (
               <button key={i} className={fresh && r!.string === i ? (ok ? 'tstring ok' : 'tstring on') : 'tstring'} onClick={() => playReference(m)} aria-label={`${label(m)} referans sesi`}>
                 <b>{label(m)}</b>
-                <small>{i + 1}. tel</small>
+                <small>{t.labels?.[i] ?? `${i + 1}. tel`}</small>
               </button>
             ))}
           </div>

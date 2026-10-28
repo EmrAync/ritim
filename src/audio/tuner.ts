@@ -3,7 +3,7 @@
 
 import { createStore, persist } from '../lib/store';
 import { audioContext, masterOut, unlockAudio } from './context';
-import { TUNINGS, detectPitchFine, freqOf, matchString, median, readNote, type Naming, type Tuning } from './pitch';
+import { TUNINGS, detectPitchFine, freqOf, matchString, median, readNote, shifted, type Naming, type Tuning } from './pitch';
 
 export interface TunerSettings {
   /** Reference A4 in Hz. */
@@ -12,6 +12,8 @@ export interface TunerSettings {
   tuningId: string;
   /** Strings of "Kendi düzenim" (MIDI, low to high). */
   custom: number[];
+  /** Bağlama ses seviyesi: semitones from the written pitch (alt tel La). */
+  shift: number;
 }
 
 export interface TunerReading {
@@ -31,7 +33,10 @@ export interface TunerState {
   reading?: TunerReading;
 }
 
-export const DEFAULT_TUNER: TunerSettings = { a4: 440, naming: 'solfej', tuningId: 'kromatik', custom: [62, 67, 69] };
+export const DEFAULT_TUNER: TunerSettings = { a4: 440, naming: 'solfej', tuningId: 'kromatik', custom: [57, 62, 67], shift: 0 };
+
+/** Bağlama ses seviyesi choices: the alt tel note they give. */
+export const SHIFTS = [-2, -1, 0, 1, 2, 3, 4, 5];
 
 export const tunerSettings = createStore<TunerSettings>(DEFAULT_TUNER);
 persist(tunerSettings, 'ritim.tuner.v1', (raw): TunerSettings => {
@@ -42,6 +47,7 @@ persist(tunerSettings, 'ritim.tuner.v1', (raw): TunerSettings => {
     naming: r.naming === 'harf' ? 'harf' : 'solfej',
     tuningId: TUNINGS.some((t) => t.id === r.tuningId) ? (r.tuningId as string) : 'kromatik',
     custom,
+    shift: typeof r.shift === 'number' && SHIFTS.includes(r.shift) ? r.shift : 0,
   };
 });
 
@@ -49,7 +55,8 @@ export const tuner = createStore<TunerState>({ listening: false, starting: false
 
 export function currentTuning(s: TunerSettings = tunerSettings.get()): Tuning {
   const t = TUNINGS.find((x) => x.id === s.tuningId) ?? TUNINGS[0];
-  return t.id === 'ozel' ? { ...t, strings: s.custom } : t;
+  if (t.id === 'ozel') return { ...t, strings: s.custom };
+  return t.instrument === 'baglama' ? shifted(t, s.shift) : t;
 }
 
 let stream: MediaStream | undefined;
