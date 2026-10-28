@@ -928,6 +928,150 @@ button:disabled {
   color: var(--accent-ink);
 }
 
+.segmented {
+  display: flex;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+  align-self: center;
+}
+
+.segmented button {
+  min-width: 110px;
+  min-height: 38px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.segmented button.on {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.ex-status {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.ex-status b {
+  color: var(--accent);
+}
+
+.ex-status.muted {
+  color: #8fb4ff;
+  border: 1px dashed #4b6ab0;
+}
+
+.ex-status.done {
+  color: var(--good);
+}
+
+.stepper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stepper {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stepper-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.stepper-row b {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.stepper-row small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.classic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.classic-svg {
+  width: min(70vw, 40vh, 300px);
+  height: auto;
+  touch-action: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+
+.mscale {
+  fill: #e3c15a;
+  font-size: 6px;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-anchor: middle;
+}
+
+.mname {
+  fill: #c9a43a;
+  font-size: 5px;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  opacity: 0.85;
+}
+
+.memblem {
+  fill: #e3c15a;
+  font-size: 15px;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-anchor: middle;
+}
+
+.mweight {
+  cursor: grab;
+}
+
+.classic-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.classic-bpm {
+  font-size: 26px;
+  color: #e9c766;
+  font-weight: 700;
+}
+
+.classic-name {
+  font-size: 16px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .metro-actions {
   display: flex;
   gap: 10px;

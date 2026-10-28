@@ -6,7 +6,8 @@ export type Voice =
   | 'kick' | 'snare' | 'hat'
   | 'darbukaDum' | 'darbukaTek' | 'darbukaKa'
   | 'davulDum' | 'davulTek'
-  | 'def' | 'zil';
+  | 'def' | 'zil'
+  | 'mechTick' | 'mechBell';
 
 const noiseCache = new WeakMap<BaseAudioContext, AudioBuffer>();
 
@@ -142,6 +143,18 @@ export function playVoice(ctx: BaseAudioContext, dest: AudioNode, voice: Voice, 
     case 'def':
       tone(ctx, dest, t, 160, 110, 0.08, 0.6 * v, 0.25);
       return metal(ctx, dest, t, 700, 0.06 * v, 0.15);
+    case 'mechTick':
+      // Escapement click of a wind-up metronome, with a hollow wooden box resonance.
+      hiss(ctx, dest, t, 'bandpass', 3200, 2.5, 0.7 * v, 0.012);
+      tone(ctx, dest, t, 1900, 1750, 0.004, 0.22 * v, 0.018, 'triangle');
+      tone(ctx, dest, t, 620, 560, 0.01, 0.28 * v, 0.05);
+      return;
+    case 'mechBell':
+      // Small bell struck on the first beat (bell metronomes).
+      tone(ctx, dest, t, 2093, 2093, 0.5, 0.3 * v, 1.1);
+      tone(ctx, dest, t, 5274, 5270, 0.5, 0.08 * v, 0.5);
+      tone(ctx, dest, t, 3140, 3138, 0.5, 0.06 * v, 0.7);
+      return;
     case 'zil':
       tone(ctx, dest, t, 2637, 2630, 0.5, 0.12 * v, 0.9);
       return tone(ctx, dest, t, 3951, 3940, 0.5, 0.07 * v, 0.7);

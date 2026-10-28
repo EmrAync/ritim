@@ -90,6 +90,14 @@ export function HelpScreen() {
         </p>
         <h3>Metronom</h3>
         <p>Usul seçin (aksaklar dahil), vuruşlara dokunarak vurguyu değiştirin. “Tempoyu ritme bağla” ile metronom ritimle aynı hızda tıklar.</p>
+        <p>
+          Üstten <b>Klasik</b> seçilirse tahta, kurmalı metronom görünür; pirinç ağırlığı parmakla aşağı-yukarı kaydırarak tempoyu değiştirebilirsiniz.
+        </p>
+        <h3>Egzersiz modu</h3>
+        <p>
+          Metronomda “Egzersiz modu”nu açın: başlangıç ve hedef tempoyu, kaç ölçüde bir ne kadar değişeceğini ve isterseniz toplam süreyi seçin. Hazır programlar (Isınma, Hız
+          çalışması, Piramit…) tek dokunuşla ayarlar. “İç tempo çalışması” birkaç ölçü çalıp birkaç ölçü susar; tempoyu içinizden tutmayı çalıştırır.
+        </p>
         <h3>Telefona kurma</h3>
         <p>
           Android/Chrome: ⋮ menü → “Ana ekrana ekle”. iPhone/Safari: Paylaş ⬆ → “Ana Ekrana Ekle”. Böylece uygulama gibi açılır; çalınan ritimler internetsiz de çalışır.

@@ -1,12 +1,15 @@
 // Pure metronome model: Turkish usuls and meters (aksak groupings with
 // dum/tek strokes), accent marks and the per-bar click plan.
 
+import { DEFAULT_EXERCISE, sanitizeExercise, type ExerciseSettings } from './exercise';
+
 export type Unit = 2 | 4 | 8 | 16;
 export type Stroke = 'D' | 'T' | 'K';
 export type Mark = 'accent' | 'normal' | 'mute';
 export type Level = 'bar' | 'group' | 'beat' | 'sub';
 export type Subdivision = 1 | 2 | 3 | 4;
-export type SoundId = 'klasik' | 'bip' | 'darbuka' | 'davul' | 'def' | 'bateri';
+export type SoundId = 'klasik' | 'mekanik' | 'bip' | 'darbuka' | 'davul' | 'def' | 'bateri';
+export type MetroView = 'modern' | 'klasik';
 
 export interface Usul {
   id: string;
@@ -107,6 +110,9 @@ export interface MetroSettings {
   factor: 0.5 | 1 | 2;
   /** START/STOP of the rhythm also starts/stops the metronome. */
   withRhythm: boolean;
+  /** Modern beat lights + knob, or the classic wooden pendulum metronome. */
+  view: MetroView;
+  exercise: ExerciseSettings;
 }
 
 export const DEFAULT_METRO: MetroSettings = {
@@ -123,6 +129,8 @@ export const DEFAULT_METRO: MetroSettings = {
   follow: true,
   factor: 1,
   withRhythm: false,
+  view: 'modern',
+  exercise: DEFAULT_EXERCISE,
 };
 
 export function withMeter(s: MetroSettings, beats: number, unit: Unit, grouping?: readonly number[], usulId = ''): MetroSettings {
@@ -148,7 +156,7 @@ export function meterForRhythm(s: MetroSettings, meter: string | undefined): Met
   return { ...(u ? { ...withUsul(s, u), strokes: s.strokes } : withMeter(s, beats, unit)), factor };
 }
 
-const SOUNDS: SoundId[] = ['klasik', 'bip', 'darbuka', 'davul', 'def', 'bateri'];
+const SOUNDS: SoundId[] = ['klasik', 'mekanik', 'bip', 'darbuka', 'davul', 'def', 'bateri'];
 const num = (v: unknown, d: number, lo: number, hi: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d;
 
@@ -179,6 +187,8 @@ export function sanitizeMetro(raw: unknown): MetroSettings {
     follow: r.follow === true,
     factor: r.factor === 0.5 || r.factor === 2 ? r.factor : 1,
     withRhythm: r.withRhythm === true,
+    view: r.view === 'klasik' ? 'klasik' : 'modern',
+    exercise: sanitizeExercise(r.exercise),
   };
 }
 

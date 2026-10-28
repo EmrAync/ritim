@@ -1,8 +1,9 @@
-// Metronome: beat lights (tap to change accent), tempo knob, usuls and
-// aksak meters, sounds, and the link to the rhythm player.
+// Metronome: beat lights (tap to change accent), tempo knob or the classic
+// wooden metronome, exercise mode, usuls and aksak meters, sounds, and the
+// link to the rhythm player.
 
 import { useEffect, useRef, useState } from 'react';
-import { metronome, metroRunning, metroSettings, updateMetro } from '../audio/metronome';
+import { exerciseRun, metronome, metroRunning, metroSettings, updateMetro } from '../audio/metronome';
 import { currentRhythm, player, setBpm as setRhythmBpm } from '../audio/player';
 import { TapTempo, tempoRange } from '../audio/tempo';
 import {
@@ -12,10 +13,13 @@ import { shownBpm } from '../data/rhythms';
 import { useStore } from '../lib/store';
 import { Header } from './common';
 import { Icon } from './icons';
+import { ClassicMetronome } from './ClassicMetronome';
+import { ExercisePanel, ExerciseStatus } from './ExercisePanel';
 import { Knob } from './Knob';
 
 const SOUNDS: { id: SoundId; label: string }[] = [
   { id: 'klasik', label: 'Tahta tık' },
+  { id: 'mekanik', label: 'Kurmalı (zilli)' },
   { id: 'bip', label: 'Bip' },
   { id: 'darbuka', label: 'Darbuka' },
   { id: 'davul', label: 'Davul' },
@@ -80,11 +84,18 @@ export function MetronomeScreen() {
   const pl = useStore(player);
   const tap = useRef(new TapTempo());
   const r = currentRhythm();
-  const bpm = Math.round(s.follow ? pl.bpm * s.factor : s.bpm);
-  const [lo, hi] = s.follow ? tempoRange(shownBpm(r)).map((x) => Math.round(x * s.factor)) : [30, 300];
+  const run = useStore(exerciseRun);
+  const ex = s.exercise.on;
+  const follow = s.follow && !ex;
+  const bpm = ex ? (running && run && !run.finished ? run.bpm : s.exercise.start) : Math.round(follow ? pl.bpm * s.factor : s.bpm);
+  const [lo, hi] = follow ? tempoRange(shownBpm(r)).map((x) => Math.round(x * s.factor)) : [30, 300];
 
   const setBpm = (v: number) => {
-    if (s.follow) setRhythmBpm(v / s.factor);
+    const b = Math.max(30, Math.min(300, Math.round(v)));
+    // Exercise: the knob sets the start tempo (not while it runs).
+    if (ex) {
+      if (!running) updateMetro((x) => ({ ...x, exercise: { ...x.exercise, start: b } }));
+    } else if (follow) setRhythmBpm(v / s.factor);
     else updateMetro({ bpm: Math.max(30, Math.min(300, Math.round(v))) });
   };
   const usul = USULS.find((u) => u.id === s.usulId);
@@ -94,6 +105,27 @@ export function MetronomeScreen() {
     <div className="screen">
       <Header title="Metronom" />
       <div className="scroll metro">
+        <div className="segmented" role="tablist">
+          {(['modern', 'klasik'] as const).map((v) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={s.view === v}
+              className={s.view === v ? 'on' : ''}
+              onClick={() =>
+                updateMetro((x) => ({
+                  ...x,
+                  view: v,
+                  // The wooden metronome sounds like one; back to the woodblock when leaving it.
+                  sound: v === 'klasik' ? 'mekanik' : x.sound === 'mekanik' ? 'klasik' : x.sound,
+                }))
+              }
+            >
+              {v === 'modern' ? 'Modern' : 'Klasik'}
+            </button>
+          ))}
+        </div>
+        <ExerciseStatus />
         <BeatLights />
         <p className="hint center">
           {usul ? `${usul.name} · ` : ''}
@@ -101,7 +133,11 @@ export function MetronomeScreen() {
         </p>
 
         <div className="tempo">
-          <Knob value={bpm} min={lo} max={hi} onChange={setBpm} caption={s.follow ? 'BPM · ritimle' : 'BPM'} label="Metronom temposu" />
+          {s.view === 'klasik' ? (
+            <ClassicMetronome bpm={bpm} onChange={setBpm} />
+          ) : (
+            <Knob value={bpm} min={lo} max={hi} onChange={setBpm} caption={ex ? 'BPM · egzersiz' : follow ? 'BPM · ritimle' : 'BPM'} label="Metronom temposu" />
+          )}
           <div className="tempo-row">
             <button className="round-btn" onClick={() => setBpm(bpm - 1)} aria-label="Tempo azalt">
               <Icon name="minus" size={28} />
@@ -139,6 +175,8 @@ export function MetronomeScreen() {
             dokun
           </button>
         </div>
+
+        <ExercisePanel />
 
         <section className="card">
           <h3>Ritimle birlikte</h3>

@@ -1,8 +1,10 @@
 // Metronome engine: lookahead scheduler on AudioContext time (25 ms timer,
 // 120 ms horizon). Tempo can follow the rhythm player; "Bir'e dokun"
 // restarts the bar at the tap so the clicks line up with the recording.
+// Exercise mode changes the tempo bar by bar and can leave bars silent.
 
 import { createStore, persist } from '../lib/store';
+import { exerciseMuted, exerciseTempo } from './exercise';
 import { masterOut, unlockAudio } from './context';
 import { playVoice, type Voice } from './drums';
 import { readLocal, writeLocal } from '../lib/store';
@@ -22,6 +24,20 @@ export const updateMetro = (patch: Partial<MetroSettings> | ((s: MetroSettings) 
 
 export const metroRunning = createStore(false);
 
+export interface ExerciseRun {
+  /** Tempo of the current bar. */
+  bpm: number;
+  /** Bars completed. */
+  bars: number;
+  /** Current bar is a silent inner-tempo bar. */
+  muted: boolean;
+  /** The total time is over (the metronome stopped by itself). */
+  finished: boolean;
+}
+
+/** Live state of a running exercise (undefined when none runs). */
+export const exerciseRun = createStore<ExerciseRun | undefined>(undefined);
+
 // Bar start per rhythm set with "Bir'e dokun" (overrides the analysed one).
 const PHASE_KEY = 'ritim.phase.v1';
 const phases: Record<string, number> = (() => {
@@ -32,6 +48,8 @@ const phases: Record<string, number> = (() => {
 /** Pulses per minute the metronome plays at now. */
 export function metroBpm(): number {
   const s = metroSettings.get();
+  const run = exerciseRun.get();
+  if (s.exercise.on && run && !run.finished) return run.bpm;
   const bpm = s.follow ? player.get().bpm * s.factor : s.bpm;
   return Math.max(20, Math.min(600, bpm));
 }
@@ -46,6 +64,8 @@ function clickVoices(sound: SoundId, ev: PlanEvent, beats: number, grouped: bool
   switch (sound) {
     case 'klasik':
       return [[accent ? 'woodHi' : 'wood', v]];
+    case 'mekanik':
+      return ev.level === 'bar' ? [['mechBell', 1], ['mechTick', 1]] : [['mechTick', v]];
     case 'bip':
       return [[accent ? 'beepHi' : 'beep', v]];
     case 'darbuka':
@@ -67,6 +87,8 @@ function strokeVoices(sound: SoundId, stroke: Stroke, bar: boolean): Hit[] {
   switch (sound) {
     case 'klasik':
       return [[stroke === 'D' ? 'woodHi' : 'wood', v]];
+    case 'mekanik':
+      return bar ? [['mechBell', 1], ['mechTick', 1]] : [['mechTick', v]];
     case 'bip':
       return [[stroke === 'D' ? 'beepHi' : 'beep', v]];
     case 'davul':
@@ -84,6 +106,10 @@ export interface Visual {
   time: number;
   beat: number;
   level: Level;
+  /** Running count of pulses (the classic pendulum swings to the other side on each). */
+  n: number;
+  /** Silent exercise bar. */
+  muted: boolean;
 }
 
 class Metronome {
@@ -98,6 +124,8 @@ class Metronome {
   private visuals: Visual[] = [];
   private locked = false;
   private lockedUntil = 0;
+  private count = 0;
+  private exStart = 0;
 
   constructor() {
     metroSettings.subscribe(() => {
@@ -116,11 +144,15 @@ class Metronome {
     this.out.gain.value = metroSettings.get().volume;
     metroRunning.set(true);
     this.restartBar(0.06);
+    const ex = metroSettings.get().exercise;
+    this.exStart = this.nextTime;
+    exerciseRun.set(ex.on ? { bpm: exerciseTempo(ex, 0, 0), bars: 0, muted: exerciseMuted(ex, 0), finished: false } : undefined);
     this.timer = setInterval(() => this.schedule(), TIMER_MS);
     this.schedule();
   }
 
-  stop(): void {
+  stop(finished = false): void {
+    if (!finished && !exerciseRun.get()?.finished) exerciseRun.set(undefined);
     clearInterval(this.timer);
     this.timer = undefined;
     this.seg?.disconnect();
@@ -161,7 +193,36 @@ class Metronome {
 
   /** Clock of the rhythm the metronome follows, when it is playing. */
   private lockClock(): RhythmClock | undefined {
-    return metroSettings.get().follow ? rhythmClock() : undefined;
+    const s = metroSettings.get();
+    // An exercise sets its own tempo.
+    return s.follow && !s.exercise.on ? rhythmClock() : undefined;
+  }
+
+  /** Seconds since the exercise started. */
+  exerciseSeconds(): number {
+    return this.ctx && metroRunning.get() ? Math.max(0, this.ctx.currentTime - this.exStart) : 0;
+  }
+
+  /** Bar line in exercise mode: next tempo and silence, or the end. */
+  private barDone(): void {
+    const ex = metroSettings.get().exercise;
+    const run = exerciseRun.get();
+    if (!ex.on || !run || run.finished) return;
+    const bars = run.bars + 1;
+    const sec = this.nextTime - this.exStart;
+    if (ex.totalMin > 0 && sec >= ex.totalMin * 60) {
+      exerciseRun.set({ ...run, bars, finished: true });
+      const at = this.nextTime;
+      this.nextTime = Infinity;
+      setTimeout(() => this.stop(true), Math.max(0, (at - this.ctx!.currentTime) * 1000));
+      return;
+    }
+    exerciseRun.set({ bpm: exerciseTempo(ex, bars, sec), bars, muted: exerciseMuted(ex, bars), finished: false });
+  }
+
+  /** Audio clock (for animations synced to the clicks). */
+  now(): number {
+    return this.ctx?.currentTime ?? 0;
   }
 
   /** The pulse sounding now (for the beat lights). */
@@ -198,12 +259,13 @@ class Metronome {
 
   private play(ev: PlanEvent, t: number): void {
     const s = metroSettings.get();
-    if (!ev.silent) {
+    const muted = !this.locked && s.exercise.on && exerciseRun.get()?.muted === true;
+    if (!ev.silent && !muted) {
       const grouped = s.grouping.some((g) => g > 1);
       const hits = ev.stroke ? strokeVoices(s.sound, ev.stroke, ev.at === 0) : clickVoices(s.sound, ev, s.beats, grouped);
       for (const [voice, vel] of hits) playVoice(this.ctx!, this.seg!, voice, t, vel);
     }
-    if (ev.level !== 'sub') this.visuals.push({ time: t, beat: ev.beat, level: ev.level });
+    if (ev.level !== 'sub') this.visuals.push({ time: t, beat: ev.beat, level: ev.level, n: this.count++, muted });
   }
 
   /** Clicks on the rhythm's own beat grid, at the positions the recording is heard. */
@@ -261,7 +323,10 @@ class Metronome {
       this.nextTime += ((nextAt - ev.at) * 60) / metroBpm();
       this.idx++;
       // Settings changes (meter, accents, usul) take effect at the bar line.
-      if (this.idx >= this.plan.length) this.newBar();
+      if (this.idx >= this.plan.length) {
+        this.barDone();
+        this.newBar();
+      }
     }
     this.trimVisuals();
   }
