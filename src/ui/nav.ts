@@ -9,6 +9,7 @@ export type Screen =
   | { name: 'lists' }
   | { name: 'list'; id: string }
   | { name: 'metronome' }
+  | { name: 'tuner' }
   | { name: 'offline' }
   | { name: 'help' };
 

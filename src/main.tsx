@@ -28,7 +28,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 // Dev only: handles for checking the audio timing from the browser console.
 if (import.meta.env.DEV) {
-  void Promise.all([import('./audio/player'), import('./audio/metronome'), import('./audio/engines'), import('./audio/context')]).then(([player, metro, engines, context]) => {
-    (window as unknown as Record<string, unknown>).__ritim = { player, metro, engines, context };
+  void Promise.all([import('./audio/player'), import('./audio/metronome'), import('./audio/engines'), import('./audio/context'), import('./audio/tuner')]).then(([player, metro, engines, context, tuner]) => {
+    (window as unknown as Record<string, unknown>).__ritim = { player, metro, engines, context, tuner };
   });
 }

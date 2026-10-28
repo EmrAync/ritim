@@ -153,6 +153,9 @@ export function MainScreen() {
           <button className={metroOn ? 'icon-btn lit' : 'icon-btn'} onClick={() => go({ name: 'metronome' })} aria-label="Metronom">
             <Icon name="metronome" />
           </button>
+          <button className="icon-btn" onClick={() => go({ name: 'tuner' })} aria-label="Akort (tuner)">
+            <Icon name="tuner" />
+          </button>
           <button className="icon-btn" onClick={() => go({ name: 'lists' })} aria-label="Listelerim">
             <Icon name="list" />
           </button>

@@ -25,7 +25,8 @@ const isStandalone = (): boolean =>
 const ITEMS: { icon: IconName; label: string; sub: string; to: Screen }[] = [
   { icon: 'music', label: 'Ritimler', sub: 'Klasöre göre gözat, ara', to: { name: 'library' } },
   { icon: 'list', label: 'Listelerim', sub: 'Şarkı listeleri, paylaşım', to: { name: 'lists' } },
-  { icon: 'metronome', label: 'Metronom', sub: 'Usuller, aksak ölçüler', to: { name: 'metronome' } },
+  { icon: 'metronome', label: 'Metronom', sub: 'Usuller, aksak ölçüler, egzersiz', to: { name: 'metronome' } },
+  { icon: 'tuner', label: 'Akort (tuner)', sub: 'Bağlama, gitar, kromatik', to: { name: 'tuner' } },
   { icon: 'offline', label: 'İnternetsiz kullanım', sub: 'Ritimleri telefona indir', to: { name: 'offline' } },
   { icon: 'info', label: 'Nasıl kullanılır?', sub: 'Kısa yardım', to: { name: 'help' } },
 ];

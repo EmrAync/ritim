@@ -10,6 +10,7 @@ import { checkLinkImport } from './ui/listShare';
 import { ImportPrompt, ListScreen, ListsScreen } from './ui/Lists';
 import { MainScreen } from './ui/MainScreen';
 import { MetronomeScreen } from './ui/MetronomeScreen';
+import { TunerScreen } from './ui/TunerScreen';
 import { nav } from './ui/nav';
 
 export function App() {
@@ -39,6 +40,7 @@ export function App() {
       {s.name === 'lists' && <ListsScreen />}
       {s.name === 'list' && <ListScreen id={s.id} />}
       {s.name === 'metronome' && <MetronomeScreen />}
+      {s.name === 'tuner' && <TunerScreen />}
       {s.name === 'offline' && <OfflineScreen />}
       {s.name === 'help' && <HelpScreen />}
       <ImportPrompt />

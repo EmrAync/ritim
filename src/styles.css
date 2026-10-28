@@ -1287,6 +1287,170 @@ button:disabled {
   animation: fade 0.15s;
 }
 
+/* ---- tuner ---- */
+.tuner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tuner-display {
+  background: radial-gradient(circle at 50% 30%, #1d222c, var(--surface) 70%);
+  border-radius: 20px;
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--line);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tuner-display.ok {
+  border-color: var(--good);
+  box-shadow: 0 0 24px rgba(60, 207, 142, 0.25);
+}
+
+.tuner-note {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  min-height: 64px;
+  letter-spacing: 1px;
+}
+
+.tuner-display.ok .tuner-note {
+  color: var(--good);
+}
+
+.tuner-note sub {
+  font-size: 22px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.tuner-gauge {
+  width: min(86vw, 340px);
+  height: auto;
+}
+
+.tg-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.tg-zone {
+  fill: none;
+  stroke: var(--good);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.tg-tick {
+  stroke: #4a5160;
+  stroke-width: 2;
+}
+
+.tg-tick.zero {
+  stroke: var(--good);
+  stroke-width: 3;
+}
+
+.tg-label {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.tg-needle {
+  transform-origin: 150px 150px;
+  transform-box: view-box;
+  transition: transform 0.12s ease-out;
+}
+
+.tg-needle line {
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.tg-needle circle {
+  fill: var(--accent);
+}
+
+.tg-needle.ok line,
+.tg-needle.ok circle {
+  stroke: var(--good);
+  fill: var(--good);
+}
+
+.tg-needle.idle {
+  opacity: 0.35;
+}
+
+.tuner-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 650;
+  min-height: 26px;
+}
+
+.tuner-display.ok .tuner-status {
+  color: var(--good);
+}
+
+.tuner-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 18px;
+}
+
+.tuner-strings {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tstring {
+  min-width: 48px;
+  min-height: 58px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+}
+
+.tstring b {
+  font-size: 18px;
+}
+
+.tstring small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tstring.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tstring.ok {
+  border-color: var(--good);
+  color: var(--good);
+}
+
 /* Short phones (iPhone SE): tighten the main screen. */
 @media (max-height: 680px) {
   .main {

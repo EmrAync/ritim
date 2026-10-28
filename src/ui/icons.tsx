@@ -15,6 +15,7 @@ const P: Record<string, ReactElement> = {
     </g>
   ),
   metronome: <path d="M9 3h6l4 18H5L9 3zM12 15l5-8M7.5 15h9" />,
+  tuner: <path d="M9 2v6a3 3 0 0 0 6 0V2M12 11v11M9 22h6" />,
   list: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
   music: <path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />,
   search: <path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-5-5" />,
