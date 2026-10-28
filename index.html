@@ -13,6 +13,22 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-180.png" />
     <title>Ritim</title>
+    <script>
+      // A style or script of an older version could not be loaded (site updated meanwhile): reload once.
+      addEventListener(
+        'error',
+        function (e) {
+          var t = e.target;
+          if (!t || (t.tagName !== 'LINK' && t.tagName !== 'SCRIPT')) return;
+          try {
+            if (sessionStorage.getItem('ritim-reload')) return;
+            sessionStorage.setItem('ritim-reload', '1');
+          } catch (x) {}
+          location.reload();
+        },
+        true,
+      );
+    </script>
   </head>
   <body>
     <div id="root"></div>

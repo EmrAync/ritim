@@ -9,6 +9,17 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+// Styles really applied: a later broken update may use the one-time reload again
+// (never cleared while broken, so it cannot reload in a loop).
+window.addEventListener('load', () => {
+  if (getComputedStyle(document.body).backgroundColor === 'rgba(0, 0, 0, 0)') return;
+  try {
+    sessionStorage.removeItem('ritim-reload');
+  } catch {
+    /* storage blocked */
+  }
+});
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('sw.js').catch(() => undefined);
