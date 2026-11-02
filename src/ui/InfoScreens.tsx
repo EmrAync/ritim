@@ -103,6 +103,12 @@ export function HelpScreen() {
           Ana ekrandaki akort çatalı simgesine dokunun, <b>DİNLE</b>’ye basıp mikrofon izni verin. Bağlama, gitar ya da kromatik seçin; teli çalın. İbre ortada ve ekran yeşilse tel
           akortludur; “Pes” ise teli sıkın, “Tiz” ise gevşetin. Tellere dokunarak referans sesini duyabilirsiniz. “Kendi düzenim”de her teli kendiniz seçersiniz.
         </p>
+        <h3>Ölçü Bul</h3>
+        <p>
+          Ana ekrandaki çubuk simgesine dokunun. <b>Vurarak</b>: türküyü çalarken her vuruşta büyük daireye, döngünün ilk vuruşunda DÜM’e dokunun. <b>Dinleyerek</b>: telefonu
+          müziğe yaklaştırıp 18 saniye dinletin. <b>Kayıttan</b>: türkünün ses dosyasını seçin. Sonuçta ölçü, usul ve tempo çıkar; “Bu tempoda dinle” ile karşılaştırın, altındaki
+          ritimlerden birine dokununca o tempoda çalar. Dinleyerek ve kayıttan bulunan ölçü bir tahmindir.
+        </p>
         <h3>Ses gelmezse</h3>
         <p>
           Telefonun ses düzeyini (yan tuşlarla) açın. Arama, Siri ya da başka bir uygulama sesi alırsa ritim kendiliğinden devam eder; devam etmezse ekrana gelen “Ses durdu”ya

@@ -12,6 +12,7 @@ const ITEMS: { icon: IconName; label: string; sub: string; to: Screen }[] = [
   { icon: 'list', label: 'Listelerim', sub: 'Şarkı listeleri, paylaşım', to: { name: 'lists' } },
   { icon: 'metronome', label: 'Metronom', sub: 'Usuller, aksak ölçüler, egzersiz', to: { name: 'metronome' } },
   { icon: 'tuner', label: 'Akort (tuner)', sub: 'Bağlama, gitar, kromatik', to: { name: 'tuner' } },
+  { icon: 'olcu', label: 'Ölçü Bul', sub: 'Türkünün ölçüsünü vurarak ya da dinleterek bul', to: { name: 'olcu' } },
   { icon: 'offline', label: 'İnternetsiz kullanım', sub: 'Ritimleri telefona indir', to: { name: 'offline' } },
   { icon: 'info', label: 'Nasıl kullanılır?', sub: 'Kısa yardım', to: { name: 'help' } },
 ];

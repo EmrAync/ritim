@@ -10,6 +10,7 @@ export type Screen =
   | { name: 'list'; id: string }
   | { name: 'metronome' }
   | { name: 'tuner' }
+  | { name: 'olcu' }
   | { name: 'offline' }
   | { name: 'help' };
 

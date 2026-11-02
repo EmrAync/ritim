@@ -29,13 +29,26 @@ export const isIOS = (): boolean =>
   typeof navigator !== 'undefined' &&
   (/iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)));
 
-function playbackSession(): void {
+/** While the microphone records, the session must allow recording (Ölçü Bul, tuner). */
+let recording = false;
+
+function sessionType(type: 'playback' | 'play-and-record'): void {
   try {
     const s = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
-    if (s && s.type !== 'playback') s.type = 'playback';
+    if (s && s.type !== type) s.type = type;
   } catch {
     /* not supported */
   }
+}
+
+function playbackSession(): void {
+  sessionType(recording ? 'play-and-record' : 'playback');
+}
+
+/** Before opening the microphone (true) and after closing it (false). */
+export function recordingSession(on: boolean): void {
+  recording = on;
+  playbackSession();
 }
 
 export function audioContext(): AudioContext {

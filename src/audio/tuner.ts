@@ -2,7 +2,7 @@
 // steadied with a short median. Also plays reference tones for the strings.
 
 import { createStore, persist } from '../lib/store';
-import { audioContext, masterOut, onAudioReset, unlockAudio } from './context';
+import { audioContext, masterOut, onAudioReset, recordingSession, unlockAudio } from './context';
 import { TUNINGS, detectPitchFine, freqOf, matchString, median, readNote, shifted, type Naming, type Tuning } from './pitch';
 
 export interface TunerSettings {
@@ -106,6 +106,8 @@ function listen(node: AudioNode): void {
 /** Asks for the microphone and starts listening. Call from a tap. */
 export async function startTuner(): Promise<void> {
   if (tuner.get().listening || tuner.get().starting) return;
+  // iPhone: the audio session must allow the microphone while the tuner listens.
+  recordingSession(true);
   unlockAudio();
   tuner.set((s) => ({ ...s, starting: true, error: undefined }));
   try {
@@ -122,6 +124,7 @@ export async function startTuner(): Promise<void> {
         : name === 'NotFoundError'
           ? 'Mikrofon bulunamadı.'
           : 'Mikrofon açılamadı. Tarayıcınız desteklemiyor olabilir.';
+    recordingSession(false);
     tuner.set((s) => ({ ...s, starting: false, listening: false, error }));
   }
 }
@@ -135,6 +138,7 @@ export function stopTuner(): void {
   stream?.getTracks().forEach((t) => t.stop());
   stream = undefined;
   history = [];
+  recordingSession(false);
   tuner.set({ listening: false, starting: false });
 }
 
