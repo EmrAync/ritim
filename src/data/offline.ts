@@ -37,7 +37,11 @@ async function fetchBlob(r: Rhythm, onProgress: (fraction: number) => void, sign
   const url = new URL(r.file, location.href).href;
   const c = hasCache() ? await caches.open(CACHE) : undefined;
   const hit = await c?.match(url);
-  if (hit) return hit.blob();
+  if (hit) {
+    // Already on the phone: nothing to download ("Hazırlanıyor…" instead of "İndiriliyor %0").
+    onProgress(1);
+    return hit.blob();
+  }
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`İndirilemedi (HTTP ${res.status})`);
   const total = Number(res.headers.get('content-length')) || r.size;
