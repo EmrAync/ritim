@@ -7,8 +7,8 @@ import { getRhythmBlob } from '../data/offline';
 import { listById } from '../data/playlists';
 import { catalog, exactBpm, rhythmById, shownBpm, type Rhythm } from '../data/rhythms';
 import { createStore, persist, readLocal, writeLocal } from '../lib/store';
-import { audioContext, masterOut, unlockAudio } from './context';
-import { ElementEngine, StretchEngine, stretchSupported, type RhythmEngine } from './engines';
+import { audioContext, holdAudio, masterOut, onAudioReset, recreateAudio, unlockAudio } from './context';
+import { ElementEngine, StretchEngine, Superseded, decodeOne, stretchSupported, type RhythmEngine } from './engines';
 import { clamp, rateFor, tempoRange } from './tempo';
 
 export interface QueueRef {
@@ -32,6 +32,8 @@ export interface PlayerState {
   volume: number;
   /** Playing order: a playlist (prev/next move inside it) or, when unset, all rhythms. */
   queue?: QueueRef;
+  /** The phone took the sound away and it did not come back by itself: a tap is needed. */
+  stalled?: boolean;
 }
 
 export interface Progress {
@@ -74,6 +76,9 @@ const tempos: Record<string, number> = (() => {
 export const currentRhythm = (): Rhythm | undefined => rhythmById(player.get().rhythmId);
 
 let gain: GainNode | undefined;
+/** Output level meter for the watchdog (is the rhythm really sounding?). */
+let meter: AnalyserNode | undefined;
+let meterBuf: Float32Array | undefined;
 let element: ElementEngine | undefined;
 let stretch: Promise<StretchEngine | undefined> | undefined;
 let stretchBroken = !stretchSupported();
@@ -107,9 +112,23 @@ function out(): GainNode {
     gain = ctx.createGain();
     gain.gain.value = player.get().volume;
     gain.connect(masterOut());
+    meter = ctx.createAnalyser();
+    meter.fftSize = 512;
+    meterBuf = new Float32Array(meter.fftSize);
+    gain.connect(meter);
   }
   return gain;
 }
+
+// A new AudioContext (after the phone kept the old one stuck): every node is rebuilt.
+onAudioReset(() => {
+  gain = undefined;
+  meter = undefined;
+  element = undefined;
+  stretch = undefined;
+  active = undefined;
+  pre = undefined;
+});
 
 function elementEngine(): ElementEngine {
   if (!element) element = new ElementEngine(audioContext(), out());
@@ -118,11 +137,21 @@ function elementEngine(): ElementEngine {
 
 async function stretchEngine(): Promise<StretchEngine | undefined> {
   if (stretchBroken) return undefined;
-  stretch ??= StretchEngine.create(audioContext(), out()).catch((e) => {
-    console.warn('Signalsmith unavailable, using <audio>', e);
-    stretchBroken = true;
-    return undefined;
-  });
+  stretch ??= StretchEngine.create(audioContext(), out())
+    .then((e) => {
+      // The worklet crashed (memory, CPU): carry on with <audio> from the same spot.
+      e.onFail = () => {
+        stretchBroken = true;
+        stretch = undefined;
+        if (player.get().playing && active === e) restartHere();
+      };
+      return e;
+    })
+    .catch((e) => {
+      console.warn('Signalsmith unavailable, using <audio>', e);
+      stretchBroken = true;
+      return undefined;
+    });
   return stretch;
 }
 
@@ -137,10 +166,12 @@ export function preload(r: Rhythm | undefined = currentRhythm()): void {
     return;
   }
   if (pre?.id === r.id) return;
+  const id = r.id;
   pre = {
-    id: r.id,
+    id,
+    // Queued behind any running decode; skipped if another rhythm is chosen meanwhile.
     buf: getRhythmBlob(r)
-      .then(async (b) => audioContext().decodeAudioData(await b.arrayBuffer()))
+      .then((b) => decodeOne(audioContext(), b, () => pre?.id === id))
       .catch(() => undefined),
   };
 }
@@ -157,16 +188,34 @@ async function engineFor(r: Rhythm): Promise<RhythmEngine> {
 const rateNow = (): number => rateFor(exactBpm(currentRhythm()), player.get().bpm);
 
 /** Downloads and prepares a rhythm; returns its engine (undefined when superseded). */
+/** Failure inside the tempo engine (not the download): worth retrying with <audio>. */
+class EngineError extends Error {}
+
+/** Download of the rhythm being prepared; aborted when another rhythm is chosen. */
+let download: { id: string; ac: AbortController } | undefined;
+
 async function prepare(r: Rhythm, my: number): Promise<RhythmEngine | undefined> {
-  const blob = await getRhythmBlob(r, (f) => {
-    if (my === token) player.set((s) => ({ ...s, loadPct: f }));
-  });
+  if (download && download.id !== r.id) download.ac.abort();
+  const ac = download?.id === r.id ? download.ac : new AbortController();
+  download = { id: r.id, ac };
+  const blob = await getRhythmBlob(
+    r,
+    (f) => {
+      if (my === token) player.set((s) => ({ ...s, loadPct: f }));
+    },
+    ac.signal,
+  );
   if (my !== token) return undefined;
   const engine = await engineFor(r);
   if (my !== token) return undefined;
   const decoded = engine.kind === 'stretch' && pre?.id === r.id ? await pre.buf : undefined;
   if (my !== token) return undefined;
-  await engine.load(r, blob, decoded);
+  try {
+    await engine.load(r, blob, decoded);
+  } catch (e) {
+    if (e instanceof Superseded) return undefined;
+    throw new EngineError(e instanceof Error ? e.message : String(e));
+  }
   if (pre?.id === r.id) pre = undefined;
   return my === token ? engine : undefined;
 }
@@ -193,10 +242,89 @@ function releaseWakeLock(): void {
   wakeLock = undefined;
 }
 
+// ---- watchdog ----
+const WATCH_MS = 100;
+let lastCtxTime = -1;
+let stuckMs = 0;
+let silentMs = 0;
+let restarts: number[] = [];
+/** The prompt is up because the context stopped (clears itself when it runs again). */
+let ctxStall = false;
+
+/** Loop position heard now (where to continue after a restart). */
+const herePos = (): number => progress.get().pos;
+
+/** Starts the same rhythm again at the same spot (engine or context trouble). */
+function restartHere(): void {
+  const now = Date.now();
+  restarts = restarts.filter((t) => now - t < 30000);
+  restarts.push(now);
+  silentMs = 0;
+  // Still silent after several tries: stop trying and ask for a tap instead.
+  if (restarts.length > 3) {
+    player.set((s) => ({ ...s, stalled: true }));
+    return;
+  }
+  // The tempo engine failed twice in a short time: use <audio> from now on.
+  if (restarts.length >= 2 && active?.kind === 'stretch') stretchBroken = true;
+  playRhythm(herePos());
+}
+
+function watch(ctx: AudioContext): void {
+  const { playing, loading, fading, volume, stalled } = player.get();
+  if (!playing || loading) return;
+  const visible = typeof document === 'undefined' || document.visibilityState === 'visible';
+  // Clock frozen or context not running: the phone took the sound away.
+  if (ctx.state !== 'running' || ctx.currentTime === lastCtxTime) {
+    stuckMs += WATCH_MS;
+    if (stuckMs === 600) void ctx.resume().catch(() => undefined);
+    if (stuckMs >= 2500 && visible && !stalled) {
+      ctxStall = true;
+      player.set((s) => ({ ...s, stalled: true }));
+    }
+    lastCtxTime = ctx.currentTime;
+    return;
+  }
+  lastCtxTime = ctx.currentTime;
+  stuckMs = 0;
+  if (stalled && ctxStall) {
+    ctxStall = false;
+    player.set((s) => ({ ...s, stalled: false }));
+  }
+  if (stalled) return;
+  // Clock runs but nothing comes out of the rhythm: restart it where it was.
+  if (!meter || !meterBuf || fading || volume < 0.05 || !visible) {
+    silentMs = 0;
+    return;
+  }
+  meter.getFloatTimeDomainData(meterBuf);
+  let peak = 0;
+  for (let i = 0; i < meterBuf.length; i += 4) peak = Math.max(peak, Math.abs(meterBuf[i]));
+  silentMs = peak < 1e-4 ? silentMs + WATCH_MS : 0;
+  if (silentMs >= 3500) restartHere();
+}
+
+/**
+ * "Ses durdu" prompt tapped: a fresh audio context (inside the tap, so iOS
+ * allows it) and the rhythm continues where it was.
+ */
+export function recoverAudio(): void {
+  const pos = herePos();
+  player.set((s) => ({ ...s, stalled: false }));
+  stuckMs = 0;
+  ctxStall = false;
+  restarts = [];
+  recreateAudio();
+  if (currentRhythm()) playRhythm(pos);
+}
+
 function tick(): void {
   if (!active) return;
   const ctx = audioContext();
-  const pos = active.posAt(ctx.currentTime) ?? 0;
+  watch(ctx);
+  if (!active) return;
+  // An engine that stopped by itself has no position: keep the last one (the watchdog restarts there).
+  const pos = active.posAt(ctx.currentTime) ?? progress.get().pos;
   const dur = active.loopLen() || currentRhythm()?.duration || 0;
   let loops = progress.get().loops;
   if (pos + 1 < lastPos) loops++;
@@ -219,8 +347,8 @@ function updateMediaSession(): void {
   ms.metadata = new MediaMetadata({ title: r.title, artist: `${r.meter ?? ''} · ${player.get().bpm} BPM`, album: 'Ritim' });
 }
 
-/** Starts the selected rhythm from the loop start. Call from a tap. */
-export function playRhythm(): void {
+/** Starts the selected rhythm (from loop position `offset`, s). Call from a tap. */
+export function playRhythm(offset = 0): void {
   const r = currentRhythm();
   if (!r) {
     player.set((s) => ({ ...s, error: 'Önce bir ritim seçin.' }));
@@ -228,6 +356,7 @@ export function playRhythm(): void {
   }
   // Synchronous part, inside the tap: unlock the context and the <audio> element (iOS).
   unlockAudio();
+  holdAudio('rhythm', true);
   out();
   const el = elementEngine();
   el.prime(SILENCE);
@@ -242,13 +371,28 @@ export function playRhythm(): void {
       active = engine;
       setGain(0, 0.01);
       appliedRate = rateNow();
-      await engine.start(appliedRate);
+      try {
+        await engine.start(appliedRate, offset);
+      } catch (e) {
+        throw new EngineError(e instanceof Error ? e.message : String(e));
+      }
       if (my !== token) return;
       setGain(player.get().volume, 0.03);
-      lastPos = 0;
-      progress.set({ pos: 0, dur: engine.loopLen() || r.duration, loops: 0 });
+      lastPos = offset;
+      lastCtxTime = -1;
+      stuckMs = 0;
+      silentMs = 0;
+      progress.set({ pos: offset, dur: engine.loopLen() || r.duration, loops: offset ? progress.get().loops : 0 });
       const { timerMin } = player.get();
-      player.set((s) => ({ ...s, playing: true, loading: false, fading: false, endsAt: timerMin ? Date.now() + timerMin * 60000 : undefined }));
+      const keepTimer = offset > 0 && player.get().endsAt;
+      player.set((s) => ({
+        ...s,
+        playing: true,
+        loading: false,
+        fading: false,
+        stalled: false,
+        endsAt: keepTimer ? s.endsAt : timerMin ? Date.now() + timerMin * 60000 : undefined,
+      }));
       clearInterval(ticker);
       ticker = setInterval(tick, 100);
       void requestWakeLock();
@@ -256,6 +400,12 @@ export function playRhythm(): void {
     } catch (e) {
       if (my !== token) return;
       console.warn(e);
+      // The tempo engine could not load or start this rhythm: try once more with <audio>.
+      if (e instanceof EngineError && useStretch()) {
+        stretchBroken = true;
+        playRhythm(offset);
+        return;
+      }
       const msg = e instanceof Error && e.name === 'NotAllowedError' ? 'Başlatmak için START tuşuna tekrar dokunun.' : 'Ritim çalınamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
       player.set((s) => ({ ...s, playing: false, loading: false, error: msg }));
     }
@@ -265,6 +415,7 @@ export function playRhythm(): void {
 /** Stops with a short fade (no click). */
 export function stopRhythm(fade = 0.12): void {
   const my = ++token;
+  holdAudio('rhythm', false);
   clearInterval(ticker);
   ticker = undefined;
   setGain(0, fade);
@@ -275,7 +426,7 @@ export function stopRhythm(fade = 0.12): void {
     engine?.stop();
     setGain(player.get().volume, 0.01);
   }, fade * 1000 + 30);
-  player.set((s) => ({ ...s, playing: false, loading: false, fading: false, endsAt: undefined }));
+  player.set((s) => ({ ...s, playing: false, loading: false, fading: false, stalled: false, endsAt: undefined }));
   releaseWakeLock();
 }
 
@@ -412,3 +563,6 @@ if (typeof document !== 'undefined') {
     if (document.visibilityState === 'visible' && player.get().playing) void requestWakeLock();
   });
 }
+
+/** For tests: the engine playing now. */
+export const activeEngine = (): RhythmEngine | undefined => active;

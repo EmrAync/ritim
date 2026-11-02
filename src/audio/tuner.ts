@@ -2,7 +2,7 @@
 // steadied with a short median. Also plays reference tones for the strings.
 
 import { createStore, persist } from '../lib/store';
-import { audioContext, masterOut, unlockAudio } from './context';
+import { audioContext, masterOut, onAudioReset, unlockAudio } from './context';
 import { TUNINGS, detectPitchFine, freqOf, matchString, median, readNote, shifted, type Naming, type Tuning } from './pitch';
 
 export interface TunerSettings {
@@ -137,6 +137,11 @@ export function stopTuner(): void {
   history = [];
   tuner.set({ listening: false, starting: false });
 }
+
+// The old context is gone: its microphone graph cannot be used any more.
+onAudioReset(() => {
+  if (tuner.get().listening) stopTuner();
+});
 
 /** For testing without a microphone: listen to any audio node. */
 export function listenTo(node: AudioNode): void {

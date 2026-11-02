@@ -8,13 +8,21 @@
 import type { Rhythm } from '../data/rhythms';
 import { Timeline } from './timeline';
 
+/** A newer rhythm was chosen while this one was loading (not an error). */
+export class Superseded extends Error {
+  constructor() {
+    super('superseded');
+    this.name = 'Superseded';
+  }
+}
+
 export interface RhythmEngine {
   readonly kind: 'stretch' | 'element';
   /** Prepares the rhythm (decode / attach); playback stays stopped. */
   load(r: Rhythm, blob: Blob, decoded?: AudioBuffer): Promise<void>;
   loadedId(): string | undefined;
-  /** Starts from the loop start; returns the audio time it is heard. */
-  start(rate: number): Promise<number>;
+  /** Starts at loop position `offset` (s); returns the audio time it is heard. */
+  start(rate: number, offset?: number): Promise<number>;
   stop(): void;
   setRate(rate: number): void;
   /** Loop position heard at audio time t (undefined when stopped). */
@@ -46,8 +54,23 @@ const CHANGE_AHEAD = 0.14;
  */
 export const lowPowerDevice = (): boolean => {
   const n = navigator as Navigator & { deviceMemory?: number };
-  return (n.deviceMemory ?? 8) <= 4 || (n.hardwareConcurrency ?? 8) <= 4;
+  // iPhone/iPad: mono as well — Safari kills audio under memory pressure, and phone speakers are mono anyway.
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  return ios || (n.deviceMemory ?? 8) <= 4 || (n.hardwareConcurrency ?? 8) <= 4;
 };
+
+/**
+ * Decoding a 3-minute loop takes about 70 MB and a second or more on a phone.
+ * Only one decode runs at a time, and a queued one whose rhythm is no longer
+ * wanted is skipped: switching quickly through rhythms never piles them up.
+ */
+let decodeChain: Promise<unknown> = Promise.resolve();
+
+export function decodeOne(ctx: BaseAudioContext, blob: Blob, wanted: () => boolean): Promise<AudioBuffer | undefined> {
+  const run = decodeChain.then(async () => (wanted() ? ctx.decodeAudioData(await blob.arrayBuffer()) : undefined));
+  decodeChain = run.catch(() => undefined);
+  return run;
+}
 
 export const stretchSupported = (): boolean =>
   typeof AudioWorkletNode !== 'undefined' && typeof WebAssembly === 'object' && typeof AudioContext !== 'undefined' && 'audioWorklet' in AudioContext.prototype;
@@ -74,6 +97,11 @@ export class StretchEngine implements RhythmEngine {
   private playing = false;
   private readonly tl = new Timeline();
   private channels = 2;
+  /** Latest load: an older load that finishes later must not add its audio. */
+  private gen = 0;
+  /** The worklet crashed (e.g. out of memory): the player switches to <audio>. */
+  failed = false;
+  onFail?: () => void;
 
   private constructor(private readonly ctx: AudioContext) {}
 
@@ -84,6 +112,10 @@ export class StretchEngine implements RhythmEngine {
     e.channels = lowPowerDevice() ? 1 : 2;
     e.node = await withTimeout(mod.default(ctx, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [e.channels] }), 15000, 'Tempo motoru başlatılamadı');
     e.node.connect(dest);
+    e.node.addEventListener('processorerror', () => {
+      e.failed = true;
+      e.onFail?.();
+    });
     // Lighter than the default preset and spread evenly over time, so slower phones do not stutter.
     await e.node.configure({ blockMs: 100, intervalMs: 40, splitComputation: true });
     e.lat = Math.min(0.4, Math.max(0.02, (await e.node.latency()) || 0.15));
@@ -97,11 +129,15 @@ export class StretchEngine implements RhythmEngine {
   async load(r: Rhythm, blob: Blob, decoded?: AudioBuffer): Promise<void> {
     if (this.id === r.id) return;
     this.stop();
+    const gen = ++this.gen;
+    const current = () => gen === this.gen;
     // Free the previous loop first, so two decoded loops are never held at once.
     const node = this.node!;
     this.id = undefined;
     await node.dropBuffers();
-    const buf = decoded ?? (await this.ctx.decodeAudioData(await blob.arrayBuffer()));
+    const buf = decoded ?? (await decodeOne(this.ctx, blob, current));
+    // Another rhythm was chosen meanwhile: its load adds the audio, not this one.
+    if (!buf || !current()) throw new Superseded();
     const { start, len } = loopFrames(buf, r.duration);
     const pad = Math.min(Math.round(PAD * buf.sampleRate), len);
     const stereo = this.channels > 1 && buf.numberOfChannels > 1;
@@ -120,7 +156,11 @@ export class StretchEngine implements RhythmEngine {
       out.set(src.subarray(0, pad), pad + len);
       return out;
     });
+    if (!current()) throw new Superseded();
+    // Dropped again right before adding: whatever an overlapping load left is gone.
+    await node.dropBuffers();
     await node.addBuffers(chans, chans.map((c) => c.buffer));
+    if (!current()) throw new Superseded();
     this.padSec = pad / buf.sampleRate;
     this.len = len / buf.sampleRate;
     this.id = r.id;
@@ -128,18 +168,19 @@ export class StretchEngine implements RhythmEngine {
 
   private padSec = PAD;
 
-  async start(rate: number): Promise<number> {
+  async start(rate: number, offset = 0): Promise<number> {
     const t = this.ctx.currentTime + this.lat + 0.03;
+    const at = this.len ? ((offset % this.len) + this.len) % this.len : 0;
     await this.node!.schedule({
       active: true,
-      input: this.padSec,
+      input: this.padSec + at,
       output: t,
       outputTime: this.ctx.currentTime,
       rate,
       loopStart: this.padSec,
       loopEnd: this.padSec + this.len,
     });
-    this.tl.reset(t, 0, rate, this.len);
+    this.tl.reset(t, at, rate, this.len);
     this.playing = true;
     return t;
   }
@@ -222,8 +263,8 @@ export class ElementEngine implements RhythmEngine {
     this.id = r.id;
   }
 
-  async start(rate: number): Promise<number> {
-    this.audio.currentTime = 0;
+  async start(rate: number, offset = 0): Promise<number> {
+    this.audio.currentTime = offset;
     this.audio.playbackRate = rate;
     await this.audio.play();
     this.playing = true;

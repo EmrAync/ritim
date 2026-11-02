@@ -5,7 +5,7 @@
 
 import { createStore, persist } from '../lib/store';
 import { exerciseBars, exerciseMuted, exerciseTempo } from './exercise';
-import { masterOut, unlockAudio } from './context';
+import { holdAudio, masterOut, onAudioReset, unlockAudio } from './context';
 import { playVoice, type Voice } from './drums';
 import { readLocal, writeLocal } from '../lib/store';
 import { player, rhythmClock, type RhythmClock } from './player';
@@ -131,11 +131,19 @@ class Metronome {
     metroSettings.subscribe(() => {
       if (this.out) this.out.gain.value = metroSettings.get().volume;
     });
+    // New audio context: rebuild the output; a running metronome carries on.
+    onAudioReset(() => {
+      const was = metroRunning.get();
+      this.stop();
+      this.out = undefined;
+      if (was) this.start();
+    });
   }
 
   start(): void {
     if (metroRunning.get()) return;
     const ctx = unlockAudio();
+    holdAudio('metronome', true);
     this.ctx = ctx;
     if (!this.out) {
       this.out = ctx.createGain();
@@ -160,6 +168,7 @@ class Metronome {
 
   stop(finished = false): void {
     if (!finished && !exerciseRun.get()?.finished) exerciseRun.set(undefined);
+    holdAudio('metronome', false);
     clearInterval(this.timer);
     this.timer = undefined;
     this.seg?.disconnect();

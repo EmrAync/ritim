@@ -3,6 +3,7 @@ import { player, preload } from './audio/player';
 import { catalog, loadCatalog, rhythmById } from './data/rhythms';
 import { refreshOffline } from './data/offline';
 import { useStore } from './lib/store';
+import { AudioStall } from './ui/AudioStall';
 import { Toast } from './ui/common';
 import { HelpScreen, OfflineScreen } from './ui/InfoScreens';
 import { InstallSheet } from './ui/Install';
@@ -46,6 +47,7 @@ export function App() {
       {s.name === 'help' && <HelpScreen />}
       <ImportPrompt />
       <InstallSheet />
+      <AudioStall />
       <Toast />
     </div>
   );

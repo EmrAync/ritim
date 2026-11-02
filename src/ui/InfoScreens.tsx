@@ -103,6 +103,11 @@ export function HelpScreen() {
           Ana ekrandaki akort çatalı simgesine dokunun, <b>DİNLE</b>’ye basıp mikrofon izni verin. Bağlama, gitar ya da kromatik seçin; teli çalın. İbre ortada ve ekran yeşilse tel
           akortludur; “Pes” ise teli sıkın, “Tiz” ise gevşetin. Tellere dokunarak referans sesini duyabilirsiniz. “Kendi düzenim”de her teli kendiniz seçersiniz.
         </p>
+        <h3>Ses gelmezse</h3>
+        <p>
+          Telefonun ses düzeyini (yan tuşlarla) açın. Arama, Siri ya da başka bir uygulama sesi alırsa ritim kendiliğinden devam eder; devam etmezse ekrana gelen “Ses durdu”ya
+          dokunun, ritim kaldığı yerden sürer. Eski ya da yavaş telefonlarda ses takılırsa ⋮ menüden “Hafif ses motoru”nu açın.
+        </p>
         <h3>Telefona kurma</h3>
         <p>
           Ana ekranın üstündeki <b>“Telefona uygulama olarak kur”</b> şeridinde <b>Kur</b>’a dokunun (ya da ⋮ menü → “Telefona kur”). Android’de tek dokunuşla kurulur; iPhone’da
